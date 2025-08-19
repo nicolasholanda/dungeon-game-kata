@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://db:5432/appdb
+    username: ${POSTGRES_USER:app}
+    password: ${POSTGRES_PASSWORD:secret}
+    driver-class-name: org.postgresql.Driver
+  sql:
+    init:
+      mode: never
+#      mode: always
+      continue-on-error: true
