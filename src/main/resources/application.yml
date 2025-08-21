@@ -2,14 +2,14 @@ spring:
   application:
     name: dungeon-game-kata
   datasource:
-    url: jdbc:postgresql://localhost:5432/appdb
+    url: jdbc:postgresql://db:5432/appdb # 'db' = service name on docker-compose
     username: app
     password: secret
-    driver-class-name: org.postgresql.Driver
+
   sql:
     init:
-      mode: never
-#      mode: always
+      mode: always #
       continue-on-error: true
+
 server:
   port: 8080
