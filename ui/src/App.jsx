@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
-import { Button } from "shadcn-ui/button";
-import { Card } from "shadcn-ui/card";
+import { Button } from "./components/button";
+import { Card } from "./components/card";
 
 function App() {
   const [hello, setHello] = useState('');
