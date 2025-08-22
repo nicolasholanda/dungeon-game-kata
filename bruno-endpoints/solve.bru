@@ -1,0 +1,19 @@
+meta {
+  name: solve
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:8080/dungeon/solve
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  [[1,-3,3],[0,-2,0],[-3,-3,-3]]
+}

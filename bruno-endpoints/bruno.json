@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "DGKATA",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
