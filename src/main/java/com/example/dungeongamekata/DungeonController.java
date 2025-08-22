@@ -18,6 +18,7 @@ public class DungeonController {
 
     @PostMapping("/solve")
     public int calculateMinimumHP(@RequestBody int[][] dungeon) {
+        validateDungeon(dungeon);
         int result = dungeonService.calculateMinimumHP(dungeon);
 
         try {
@@ -29,5 +30,24 @@ public class DungeonController {
         }
 
         return result;
+    }
+    private void validateDungeon(int[][] dungeon) {
+        if (dungeon == null || dungeon.length == 0) {
+            throw new InvalidDungeonInputException("Dungeon array cannot be null or empty");
+        }
+
+        int rows = dungeon.length;
+        int cols = dungeon[0].length;
+
+        if (cols == 0) {
+            throw new InvalidDungeonInputException("Dungeon array cannot have empty rows");
+        }
+
+        // Validate that all rows have the same length
+        for (int i = 1; i < rows; i++) {
+            if (dungeon[i].length != cols) {
+                throw new InvalidDungeonInputException("All rows in dungeon must have the same length");
+            }
+        }
     }
 }
