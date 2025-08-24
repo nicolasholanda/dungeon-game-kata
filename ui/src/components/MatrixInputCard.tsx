@@ -42,11 +42,12 @@ export function MatrixInputCard({ matrix, onMatrixChange }: MatrixInputCardProps
     }
   };
 
-  const loadExample = (exampleMatrix: Matrix) => {
-    const jsonString = matrixToJSON(exampleMatrix);
-    setInput(jsonString);
-    handleInputChange(jsonString);
-  };
+  // Exemplo de função para carregar matriz, pode ser removida se não utilizada
+  // const loadExample = (exampleMatrix: Matrix) => {
+  //   const jsonString = matrixToJSON(exampleMatrix);
+  //   setInput(jsonString);
+  //   handleInputChange(jsonString);
+  // };
 
   const generateRandom = (rows: number, cols: number) => {
     const randomMatrix = generateRandomMatrix(rows, cols);
@@ -85,15 +86,15 @@ export function MatrixInputCard({ matrix, onMatrixChange }: MatrixInputCardProps
       return;
     }
 
-    const success = await copyToClipboard(matrixToJSON(matrix));
-    if (success) {
+    try {
+      await navigator.clipboard.writeText(matrixToJSON(matrix));
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       toast({
         title: "Matrix copied",
         description: "The matrix has been copied to your clipboard."
       });
-    } else {
+    } catch {
       toast({
         title: "Copy failed",
         description: "Could not copy matrix to clipboard.",
