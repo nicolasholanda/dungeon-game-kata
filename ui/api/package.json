@@ -1,0 +1,16 @@
+{
+  "name": "sync-api",
+  "version": "0.0.1",
+  "description": "api to make sync with pouch and couch db",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0",
+    "pouchdb": "^9.0.0",
+    "pouchdb-adapter-http": "^9.0.0"
+  }
+}
