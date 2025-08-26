@@ -4,32 +4,42 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
+
 @RestController
 @RequestMapping("/dungeon")
 public class DungeonController {
     private final DungeonService dungeonService;
     private final ModelRunRepository modelRunRepository;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
-    public DungeonController(DungeonService dungeonService, ModelRunRepository modelRunRepository) {
+    public DungeonController(DungeonService dungeonService, ModelRunRepository modelRunRepository, ObjectMapper objectMapper) {
         this.dungeonService = dungeonService;
         this.modelRunRepository = modelRunRepository;
+        this.objectMapper = objectMapper;
     }
 
     @PostMapping("/solve")
-    public int calculateMinimumHP(@RequestBody int[][] dungeon) {
+    public DungeonResponse calculateMinimumHP(@RequestBody int[][] dungeon) {
         validateDungeon(dungeon);
-        int result = dungeonService.calculateMinimumHP(dungeon);
 
         try {
             String inputJson = objectMapper.writeValueAsString(dungeon);
-            String outputStr = Integer.toString(result);
-            modelRunRepository.save(ModelRun.of(inputJson, outputStr));
-        } catch (JsonProcessingException e) {
-           
-        }
 
-        return result;
+            Optional<ModelRun> existingRun = modelRunRepository.findByInput(inputJson);
+            if (existingRun.isPresent()) {
+                return objectMapper.readValue(existingRun.get().getOutput(), DungeonResponse.class);
+            }
+
+            DungeonResponse response = dungeonService.calculateMinimumHP(dungeon);
+            String outputJson = objectMapper.writeValueAsString(response);
+            modelRunRepository.save(ModelRun.of(inputJson, outputJson));
+
+            return response;
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Erro ao processar JSON", e);
+        }
     }
     private void validateDungeon(int[][] dungeon) {
         if (dungeon == null || dungeon.length == 0) {

@@ -18,6 +18,7 @@ public class ModelRun {
     private LocalDateTime createdAt;
 
     public static ModelRun of(String input, String output) {
-        return new ModelRun(null, input, output, null);
+        LocalDateTime now = LocalDateTime.now();
+        return new ModelRun(null, input, output, now);
     }
 }
