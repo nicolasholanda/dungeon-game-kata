@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-@ControllerAdvice
+@ControllerAdvice(basePackages = "com.example.dungeongamekata.controller")
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidDungeonInputException.class)
