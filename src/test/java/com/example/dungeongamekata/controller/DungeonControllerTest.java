@@ -1,6 +1,5 @@
-package com.example.dungeongamekata;
+package com.example.dungeongamekata.controller;
 
-import com.example.dungeongamekata.controller.DungeonController;
 import com.example.dungeongamekata.dto.DungeonResponse;
 import com.example.dungeongamekata.exception.GlobalExceptionHandler;
 import com.example.dungeongamekata.repository.ModelRunRepository;
