@@ -1,4 +1,4 @@
-package com.example.dungeongamekata;
+package com.example.dungeongamekata.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,6 +18,7 @@ public class ModelRun {
     private LocalDateTime createdAt;
 
     public static ModelRun of(String input, String output) {
-        return new ModelRun(null, input, output, null);
+        LocalDateTime now = LocalDateTime.now();
+        return new ModelRun(null, input, output, now);
     }
 }
