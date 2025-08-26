@@ -14,6 +14,20 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(InvalidDungeonInputException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidDungeonInputException(
+            InvalidDungeonInputException ex, WebRequest request) {
+
+        ErrorResponse errorResponse = new ErrorResponse(
+                ex.getMessage() != null ? ex.getMessage() : "Invalid dungeon input provided",
+                HttpStatus.BAD_REQUEST.value(),
+                request.getDescription(false).replace("uri=", ""),
+                "Bad Request"
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
             IllegalArgumentException ex, WebRequest request) {

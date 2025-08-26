@@ -82,7 +82,7 @@ class GlobalExceptionHandlerTest {
         MethodArgumentNotValidException exception = mock(MethodArgumentNotValidException.class);
         BindingResult bindingResult = mock(BindingResult.class);
         FieldError fieldError = new FieldError("object", "field", "must not be null");
-        
+
         when(exception.getBindingResult()).thenReturn(bindingResult);
         when(bindingResult.getFieldErrors()).thenReturn(List.of(fieldError));
 
@@ -150,5 +150,21 @@ class GlobalExceptionHandlerTest {
         assertEquals("An unexpected error occurred", errorResponse.getMessage());
         assertEquals(500, errorResponse.getStatusCode());
         assertEquals("Internal Server Error", errorResponse.getError());
+    }
+
+    @Test
+    void handleInvalidDungeonInputException_ReturnsExpectedErrorResponse() {
+        InvalidDungeonInputException exception = new InvalidDungeonInputException("Dungeon array cannot be null or empty");
+
+        ResponseEntity<ErrorResponse> response = exceptionHandler.handleInvalidDungeonInputException(exception, webRequest);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        ErrorResponse errorResponse = response.getBody();
+        assertNotNull(errorResponse);
+        assertEquals("Dungeon array cannot be null or empty", errorResponse.getMessage());
+        assertEquals(400, errorResponse.getStatusCode());
+        assertEquals("/dungeon/solve", errorResponse.getPath());
+        assertEquals("Bad Request", errorResponse.getError());
+        assertNotNull(errorResponse.getTimestamp());
     }
 }
