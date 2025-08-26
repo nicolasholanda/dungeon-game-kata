@@ -16,6 +16,7 @@ services:
       retries: 15
 
   app1:
+    init: true
     build: .
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -24,12 +25,18 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    deploy:
-      resources:
-        limits:
-          memory: 512m
+    restart: always
+    labels:
+      - "chaos.target=apps"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 30s
 
   app2:
+    init: true
     build: .
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -38,8 +45,18 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    restart: always
+    labels:
+      - "chaos.target=apps"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 30s
 
   app3:
+    init: true
     build: .
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -48,6 +65,16 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    restart: always
+    labels:
+      - "chaos.target=apps"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 30s
+
 
   haproxy:
     image: haproxy:latest
@@ -67,18 +94,206 @@ services:
       retries: 3
       start_period: 10s
 
-  pumba:
-    image: gaiaadm/pumba:0.9.0
-    container_name: pumba-chaos
+  ## Chaos Engineering with Pumba
+
+  # Container pause chaos
+  chaos-pause:
+    image: gaiaadm/pumba:latest
+    container_name: chaos-pause-service
     restart: unless-stopped
     privileged: true
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    command: ["--log-level", "info", "kill", "--signal", "SIGTERM", "re2:^dungeon-game-kata-app"]
+    #command: ["--log-level", "info", "--interval", "30s", "pause", "--duration", "30s", "--limit", "1", "re2:^dungeon-game-kata-app"]
+    command:
+      [
+        "--log-level","info",
+        "--random",
+        "--interval","61s",
+        "pause",
+        "--duration","25s",
+        "--limit","1",
+        "re2:^dungeon-game-kata-app(1|2|3)-\\d+$"
+      ]
     depends_on:
       - app1
       - app2
       - app3
+    labels:
+      - "chaos.type=pause"
+    profiles: ["chaos"]
+
+
+
+  chaos-netem-jitter:
+    image: gaiaadm/pumba:latest
+    container_name: chaos-netem-service-jitter
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    # alvo aleatorio a cada 50s, delay de 300ms +-60ms por 25s
+    command:
+      [
+        "--log-level","info",
+        "--random",
+        "--interval","50s",
+        "netem","--duration","25s",
+        "delay","--time","800","--jitter","200","--correlation","25",
+        "re2:^dungeon-game-kata-app(1|2|3)-\\d+$"
+      ]
+    depends_on: [app1, app2, app3]
+    profiles: ["chaos"]
+
+  chaos-netem-5432:
+    image: gaiaadm/pumba:latest
+    container_name: chaos-netem-db-latency
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    # um alvo aleatorio a cada 50s, delay de 200ms +-50ms por 25s
+    # aplica so na porta 5432 (Postgres) - simula latencia de rede com o DB
+    command:
+      [
+        "--log-level","info","--random","--interval","50s",
+        "netem","--duration","25s",
+        "--egress-port","5432",
+        "delay","--time","500","--jitter","100","--correlation","20",
+        "re2:^dungeon-game-kata-app(1|2|3)-\\d+$"
+      ]
+    depends_on: [app1, app2, app3]
+    profiles: ["chaos"]
+
+  chaos-netem-http-rate:
+    image: gaiaadm/pumba:latest
+    container_name: chaos-netem-http-rate
+    restart: unless-stopped
+    privileged: true
+    volumes: ["/var/run/docker.sock:/var/run/docker.sock:ro"]
+    command:
+      [
+        "--log-level","info","--random","--interval","67s",
+        "netem","--duration","25s",
+        # opção A: estrangula tudo que sai do app
+        "rate","--rate","300kbit",
+        # opção B (apenas porta 8080):
+        # "--ingress-port","8080","rate","--rate","300kbit",
+        "re2:^dungeon-game-kata-app(1|2|3)-\\d+$"
+      ]
+    depends_on: [app1, app2, app3]
+    profiles: ["chaos"]
+
+  # introduz perda de pacotes (5% dos pacotes)
+  chaos-netem-http-loss:
+    image: gaiaadm/pumba:latest
+    restart: unless-stopped
+    privileged: true
+    volumes: ["/var/run/docker.sock:/var/run/docker.sock:ro"]
+    command:
+      [
+        "--log-level","info","--random","--interval","73s",
+        "netem","--duration","25s",
+        "loss","--percent","5","--correlation","25",
+        "re2:^dungeon-game-kata-app(1|2|3)-\\d+$"
+      ]
+    depends_on: [app1, app2, app3]
+    profiles: ["chaos"]
+
+  # introduz corrupção de pacotes (1% dos pacotes)
+  chaos-netem-http-corrupt:
+    image: gaiaadm/pumba:latest
+    restart: unless-stopped
+    privileged: true
+    volumes: ["/var/run/docker.sock:/var/run/docker.sock:ro"]
+    command:
+      [
+        "--log-level","info","--random","--interval","83s",
+        "netem","--duration","20s",
+        "corrupt","--percent","1",
+        "re2:^dungeon-game-kata-app(1|2|3)-\\d+$"
+      ]
+    depends_on: [app1, app2, app3]
+    profiles: ["chaos"]
+
+  ## chaos-kill com SIGKILL
+  #chaos-kill:
+  #  image: gaiaadm/pumba:latest
+  #  restart: unless-stopped
+  #  volumes: ["/var/run/docker.sock:/var/run/docker.sock:ro"]
+  #  command: [
+  #    "--log-level","info",
+  #    "--random","--interval","179s",
+  #    "kill","--signal","SIGTERM","--limit","1",
+  #    "re2:^dungeon-game-kata-app(1|2|3)-\\d+$"
+  #  ]
+  #  depends_on: [app1, app2, app3]
+
+  #chaos-kill:
+  #  image: gaiaadm/pumba:latest
+  #  container_name: chaos-kill-service
+  #  restart: unless-stopped
+  #  privileged: true
+  #  volumes:
+  #    - /var/run/docker.sock:/var/run/docker.sock:ro
+  #  command: ["--log-level", "info", "--interval", "45s", "kill", "--signal", "SIGTERM", "--limit", "1", "re2:^dungeon-game-kata-app"]
+  #  depends_on:
+  #    - app1
+  #    - app2
+  #    - app3
+  #  labels:
+  #    - "chaos.type=kill"
+  #    - "chaos.target=apps"
+
+
+  #chaos-throttle:
+  #  image: docker:27-cli
+  #  restart: unless-stopped
+  #  environment:
+  #    - DOCKER_HOST=unix:///var/run/docker.sock
+  #  volumes:
+  #    - /var/run/docker.sock:/var/run/docker.sock
+  #  entrypoint: ["/bin/sh","-lc"]
+  #  command: |
+  #    while true; do
+  #      list="$(docker ps --filter "label=chaos.target=apps" --format '{{.Names}}')"
+  #      n=$(printf "%s\n" "$list" | sed '/^$/d' | wc -l | tr -d ' ')
+  #      if [ "$n" -gt 0 ]; then
+  #        # índice pseudo-aleatório estável (muda com o tempo)
+  #        idx=$(( ($(date +%s) / 15) % n + 1 ))
+  #        T=$(printf "%s\n" "$list" | sed -n "${idx}p")
+  #        echo ">>> THROTTLE $T"
+  #        docker update --cpus=0.3 --memory=256m --memory-swap=256m "$T" || true
+  #        sleep 45
+  #        echo ">>> RESET $T"
+  #        docker update --cpus=2 "$T" || true
+  #      else
+  #        echo ">>> nenhum alvo encontrado"
+  #      fi
+  #      sleep 75
+  #    done
+  #  depends_on: [app1, app2, app3]
+
+
+
+##########################################################################################
+##                              Instrucoes
+##
+##  Para subir o ambiente sem chaos (apenas app, db, haproxy):
+##
+##  1. Execute `docker-compose up -d` para iniciar os containers em segundo plano.
+##  2. Acesse o HAProxy em `http://localhost:80` para verificar se está funcionando.
+##  3. Para visualizar as estatísticas do HAProxy - `http://localhost:8404/stats`.
+##
+##
+##  Para subir o ambiente com chaos (inclui todos os serviços de chaos):
+##  - docker compose --profile chaos up -d
+##
+##  Para subir apenas os serviços de chaos isoladamente:
+##  - docker compose --profile chaos up chaos-pause chaos-netem-jitter
+##
+
+# ------------------------------------------------------------------
 
   # Chaos Testing Tools (optional)
   chaos-toolkit:
