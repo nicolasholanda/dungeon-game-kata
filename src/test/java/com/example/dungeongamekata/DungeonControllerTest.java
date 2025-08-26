@@ -1,6 +1,10 @@
 package com.example.dungeongamekata;
 
+import com.example.dungeongamekata.controller.DungeonController;
+import com.example.dungeongamekata.dto.DungeonResponse;
 import com.example.dungeongamekata.exception.GlobalExceptionHandler;
+import com.example.dungeongamekata.repository.ModelRunRepository;
+import com.example.dungeongamekata.service.DungeonService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +14,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,11 +34,11 @@ class DungeonControllerTest {
     @Mock
     private ModelRunRepository modelRunRepository;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
-        DungeonController controller = new DungeonController(dungeonService, modelRunRepository);
+        DungeonController controller = new DungeonController(dungeonService, modelRunRepository, objectMapper);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
@@ -109,14 +115,21 @@ class DungeonControllerTest {
 
     @Test
     void postSolve_WithValidInput_ReturnsSuccessfulResponse() throws Exception {
-        when(dungeonService.calculateMinimumHP(any())).thenReturn(42);
-
         int[][] validDungeon = {{1, 2}, {3, 4}};
+        DungeonResponse mockResponse = new DungeonResponse(42, List.of(new int[]{0, 0}, new int[]{1, 1}));
+        when(dungeonService.calculateMinimumHP(any())).thenReturn(mockResponse);
+
+
 
         mockMvc.perform(post("/dungeon/solve")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(validDungeon)))
                 .andExpect(status().isOk())
-                .andExpect(content().string("42"));
+                .andExpect(jsonPath("$.minimumHP").value(42))
+                .andExpect(jsonPath("$.path").isArray())
+                .andExpect(jsonPath("$.path[0][0]").value(0))
+                .andExpect(jsonPath("$.path[0][1]").value(0))
+                .andExpect(jsonPath("$.path[1][0]").value(1))
+                .andExpect(jsonPath("$.path[1][1]").value(1));
     }
 }

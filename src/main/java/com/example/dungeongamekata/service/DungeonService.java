@@ -1,5 +1,6 @@
-package com.example.dungeongamekata;
+package com.example.dungeongamekata.service;
 
+import com.example.dungeongamekata.dto.DungeonResponse;
 import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.ArrayList;

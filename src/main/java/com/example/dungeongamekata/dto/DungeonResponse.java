@@ -1,4 +1,4 @@
-package com.example.dungeongamekata;
+package com.example.dungeongamekata.dto;
 
 import java.util.List;
 
