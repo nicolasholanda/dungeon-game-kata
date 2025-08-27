@@ -5,12 +5,14 @@ import com.example.dungeongamekata.dto.ModelRun;
 import com.example.dungeongamekata.repository.ModelRunRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class DungeonService {
 
@@ -74,23 +76,31 @@ public class DungeonService {
         try {
             String inputJson = objectMapper.writeValueAsString(dungeonGrid);
 
-            //find and return existing run if exists
-            Optional<ModelRun> existingRun = modelRunRepository.findByInput(inputJson);
-            if (existingRun.isPresent()) {
-                return objectMapper.readValue(existingRun.get().getOutput(), DungeonResponse.class);
+            // Find and return existing run if exists, but continue if database is unavailable
+            try {
+                Optional<ModelRun> existingRun = modelRunRepository.findByInput(inputJson);
+                if (existingRun.isPresent()) {
+                    return objectMapper.readValue(existingRun.get().getOutput(), DungeonResponse.class);
+                }
+            } catch (Exception e) {
+                log.warn("Database unavailable for cache lookup, proceeding with calculation: {}", e.getMessage());
             }
 
-            //do the calculation
+            // Do the calculation
             DungeonResponse response = executeCalculateMinimumHP(dungeonGrid);
 
-            //save the new run
-            String outputJson = objectMapper.writeValueAsString(response);
-            modelRunRepository.save(ModelRun.of(inputJson, outputJson));
+            // Try to save the result, but skip if database is unavailable
+            try {
+                String outputJson = objectMapper.writeValueAsString(response);
+                modelRunRepository.save(ModelRun.of(inputJson, outputJson));
+            } catch (Exception e) {
+                log.warn("Database unavailable for caching result, returning calculated response: {}", e.getMessage());
+            }
 
             return response;
         } catch (JsonProcessingException e) {
             e.printStackTrace();
-            throw new RuntimeException("Erro ao processar JSON", e);
+            throw new RuntimeException("Error processing JSON", e);
         }
     }
 
