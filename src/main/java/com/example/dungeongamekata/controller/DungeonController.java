@@ -3,13 +3,17 @@ package com.example.dungeongamekata.controller;
 import com.example.dungeongamekata.service.DungeonService;
 import com.example.dungeongamekata.dto.DungeonResponse;
 import com.example.dungeongamekata.exception.InvalidDungeonInputException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
+@Tag(name = "Dungeon", description = "Dungeon management API")
 @RestController
-@RequestMapping("/dungeon")
 public class DungeonController {
     private final DungeonService dungeonService;
 
@@ -18,7 +22,11 @@ public class DungeonController {
         this.dungeonService = dungeonService;
     }
 
-    @PostMapping("/solve")
+    @GetMapping("/hello")
+    public Map<String,String> hello() { return Map.of("status","ok"); }
+
+    @Operation(summary = "Calculate Minimum HP", description = "Calculates the minimum initial health points required to navigate the dungeon grid.")
+    @PostMapping("/dungeon/solve")
     public DungeonResponse calculateMinimumHP(@RequestBody int[][] dungeonGrid) {
         validateInputGridForDungeon(dungeonGrid);
         return dungeonService.calculateMinimumHP(dungeonGrid);

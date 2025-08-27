@@ -15,6 +15,4 @@ public class DungeonGameKataApplication {
         SpringApplication.run(DungeonGameKataApplication.class, args);
     }
 
-    @GetMapping("/hello")
-    public Map<String,String> hello() { return Map.of("status","ok"); }
 }
