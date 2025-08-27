@@ -3,7 +3,6 @@ spring:
     name: dungeon-game-kata
   datasource:
     url: jdbc:postgresql://localhost:5432/appdb # 'db' = service name on docker-compose
-#    url: jdbc:postgresql://localhost:5432/appdb --> to connect from local host machine
     username: app
     password: secret
 
