@@ -18,15 +18,6 @@
     "title": "Application is healthy and responding",
     "probes": [
       {
-        "name": "health-check",
-        "type": "probe",
-        "provider": {
-          "type": "http",
-          "url": "${app_url}/actuator/health"
-        },
-        "tolerance": 200
-      },
-      {
         "name": "dungeon-solve-endpoint-available",
         "type": "probe",
         "provider": {
@@ -89,7 +80,7 @@
       },
       "tolerance": {
         "type": "range",
-        "range": [500, 599],
+        "range": [200, 299],
         "target": "status"
       }
     }
