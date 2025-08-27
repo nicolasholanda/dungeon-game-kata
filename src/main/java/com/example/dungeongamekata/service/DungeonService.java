@@ -1,14 +1,35 @@
 package com.example.dungeongamekata.service;
 
 import com.example.dungeongamekata.dto.DungeonResponse;
+import com.example.dungeongamekata.dto.ModelRun;
+import com.example.dungeongamekata.repository.ModelRunRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class DungeonService {
-    public DungeonResponse calculateMinimumHP(int[][] dungeon) {
+
+
+    private final ModelRunRepository modelRunRepository;
+    private final ObjectMapper objectMapper;
+
+    public DungeonService(ModelRunRepository modelRunRepository, ObjectMapper objectMapper) {
+        this.modelRunRepository = modelRunRepository;
+        this.objectMapper = objectMapper;
+    }
+
+
+    /**
+     * Calculate the minimum initial health required to rescue the princess in the dungeon.
+     * @param dungeon
+     * @return
+     */
+    private DungeonResponse executeCalculateMinimumHP(int[][] dungeon) {
         int m = dungeon.length;
         int n = dungeon[0].length;
 
@@ -48,4 +69,31 @@ public class DungeonService {
 
         return new DungeonResponse(dp[0][0], path);
     }
+
+    public DungeonResponse calculateMinimumHP(int[][] dungeonGrid){
+        try {
+            String inputJson = objectMapper.writeValueAsString(dungeonGrid);
+
+            //find and return existing run if exists
+            Optional<ModelRun> existingRun = modelRunRepository.findByInput(inputJson);
+            if (existingRun.isPresent()) {
+                return objectMapper.readValue(existingRun.get().getOutput(), DungeonResponse.class);
+            }
+
+            //do the calculation
+            DungeonResponse response = calculateMinimumHP(dungeonGrid);
+
+            //save the new run
+            String outputJson = objectMapper.writeValueAsString(response);
+            modelRunRepository.save(ModelRun.of(inputJson, outputJson));
+
+            return response;
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Erro ao processar JSON", e);
+        }
+    }
+
+
+
 }

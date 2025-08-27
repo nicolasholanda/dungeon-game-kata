@@ -2,7 +2,6 @@ package com.example.dungeongamekata.controller;
 
 import com.example.dungeongamekata.dto.DungeonResponse;
 import com.example.dungeongamekata.exception.GlobalExceptionHandler;
-import com.example.dungeongamekata.repository.ModelRunRepository;
 import com.example.dungeongamekata.service.DungeonService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,18 +25,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class DungeonControllerTest {
 
     private MockMvc mockMvc;
+    private ObjectMapper objectMapper;
 
     @Mock
     private DungeonService dungeonService;
 
-    @Mock
-    private ModelRunRepository modelRunRepository;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
     @BeforeEach
     void setUp() {
-        DungeonController controller = new DungeonController(dungeonService, modelRunRepository, objectMapper);
+        objectMapper = new ObjectMapper();
+        DungeonController controller = new DungeonController(dungeonService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
@@ -99,6 +95,8 @@ class DungeonControllerTest {
         when(dungeonService.calculateMinimumHP(any())).thenThrow(new RuntimeException("Service error"));
 
         int[][] validDungeon = {{1, 2}, {3, 4}};
+
+
 
         mockMvc.perform(post("/dungeon/solve")
                 .contentType(MediaType.APPLICATION_JSON)

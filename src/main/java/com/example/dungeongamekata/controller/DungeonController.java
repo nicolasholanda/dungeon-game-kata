@@ -1,52 +1,35 @@
 package com.example.dungeongamekata.controller;
 
 import com.example.dungeongamekata.service.DungeonService;
-import com.example.dungeongamekata.repository.ModelRunRepository;
 import com.example.dungeongamekata.dto.DungeonResponse;
-import com.example.dungeongamekata.dto.ModelRun;
 import com.example.dungeongamekata.exception.InvalidDungeonInputException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/dungeon")
 public class DungeonController {
     private final DungeonService dungeonService;
-    private final ModelRunRepository modelRunRepository;
-    private final ObjectMapper objectMapper;
 
-    public DungeonController(DungeonService dungeonService, ModelRunRepository modelRunRepository, ObjectMapper objectMapper) {
+
+    public DungeonController(DungeonService dungeonService) {
         this.dungeonService = dungeonService;
-        this.modelRunRepository = modelRunRepository;
-        this.objectMapper = objectMapper;
     }
 
     @PostMapping("/solve")
-    public DungeonResponse calculateMinimumHP(@RequestBody int[][] dungeon) {
-        validateDungeon(dungeon);
-
-        try {
-            String inputJson = objectMapper.writeValueAsString(dungeon);
-
-            Optional<ModelRun> existingRun = modelRunRepository.findByInput(inputJson);
-            if (existingRun.isPresent()) {
-                return objectMapper.readValue(existingRun.get().getOutput(), DungeonResponse.class);
-            }
-
-            DungeonResponse response = dungeonService.calculateMinimumHP(dungeon);
-            String outputJson = objectMapper.writeValueAsString(response);
-            modelRunRepository.save(ModelRun.of(inputJson, outputJson));
-
-            return response;
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Erro ao processar JSON", e);
-        }
+    public DungeonResponse calculateMinimumHP(@RequestBody int[][] dungeonGrid) {
+        validateInputGridForDungeon(dungeonGrid);
+        return dungeonService.calculateMinimumHP(dungeonGrid);
     }
-    private void validateDungeon(int[][] dungeon) {
+
+    /**
+     * Validate the dungeon input.
+     *
+     * @param dungeon
+     */
+    private void validateInputGridForDungeon(int[][] dungeon) {
         if (dungeon == null || dungeon.length == 0) {
             throw new InvalidDungeonInputException("Dungeon array cannot be null or empty");
         }
