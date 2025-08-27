@@ -81,7 +81,7 @@ public class DungeonService {
             }
 
             //do the calculation
-            DungeonResponse response = calculateMinimumHP(dungeonGrid);
+            DungeonResponse response = executeCalculateMinimumHP(dungeonGrid);
 
             //save the new run
             String outputJson = objectMapper.writeValueAsString(response);
