@@ -55,17 +55,17 @@ export default function App() {
       setResult(data);
 
     } catch (err: Error | unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
 
       if (errorMessage.includes('aborted') || errorMessage.includes('NetworkError')) {
-        setError('⚠️ API indisponível - Usando modo offline. Tente novamente quando a conexão for restaurada.');
-        // Simular resultado offline para demonstração
+        setError('⚠️ API unavailable - Using offline mode. Please try again when the connection is restored.');
+        // Simulate offline result for demonstration  
         setResult({
           minimumHP: -1,
           path: [[0, 0], [0, 1], [0, 2]]
         });
       } else {
-        setError(`Erro na API: ${errorMessage}`);
+        setError(errorMessage);
       }
     } finally {
       setLoading(false);
