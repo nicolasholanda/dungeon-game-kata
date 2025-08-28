@@ -8,8 +8,6 @@
 
 `http://localhost:8080`
 
-
-
 ## Swagger UI
 
 `http://localhost:8080/swagger-ui.html`
@@ -28,8 +26,19 @@
   ## Testing it
 
   curl -s -X POST http://localhost:8080/dungeon/solve \
-  -H "Content-Type: application/json" \
-  -d '[[1,-3,3],[0,-2,0],[-3,-3,-3]]'
+   -H "Content-Type: application/json" \
+   -d '[[1,-3,3],[0,-2,0],[-3,-3,-3]]'
 
   docker exec -it dungeon-game-kata-db-1 \
-  psql -U app -d appdb -c "SELECT id, input, output, created_at FROM model_runs ORDER BY id DESC;"
+   psql -U app -d appdb -c "SELECT id, input, output, created_at FROM model_runs ORDER BY id DESC;"
+
+  ## Frontend
+
+  Inside UI folder
+
+  ```shell
+  npm i
+  npm run dev # to run dev
+  npm build   # to make a build
+  npm start   # to serve the builded project
+  ```
