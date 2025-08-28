@@ -18,7 +18,7 @@ export function AppWrapper({ children }: AppShellProps) {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[60vh]">
+      <main className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[60vh] flex-col">
         {children}
       </main>
 

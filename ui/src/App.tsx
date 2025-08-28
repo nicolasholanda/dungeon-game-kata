@@ -36,17 +36,37 @@ export default function App() {
     setLoading(true);
     setError(null);
     setResult(null);
+
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
       const res = await fetch(`${API_BASE_URL}/dungeon/solve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: matrix,
+        signal: controller.signal
       });
-      if (!res.ok) throw new Error('Erro ao buscar solução');
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) throw new Error(`API Error: ${res.status} ${res.statusText}`);
       const data = await res.json();
       setResult(data);
+
     } catch (err: Error | unknown) {
-      setError((err as Error).message || 'Erro desconhecido');
+      const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
+
+      if (errorMessage.includes('aborted') || errorMessage.includes('NetworkError')) {
+        setError('⚠️ API indisponível - Usando modo offline. Tente novamente quando a conexão for restaurada.');
+        // Simular resultado offline para demonstração
+        setResult({
+          minimumHP: -1,
+          path: [[0, 0], [0, 1], [0, 2]]
+        });
+      } else {
+        setError(`Erro na API: ${errorMessage}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -58,7 +78,6 @@ export default function App() {
         {/* Input Section */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold mb-4">Matrix Input</h2>
-
           {/* Matrix Selection */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">Quick Select:</label>
@@ -116,6 +135,18 @@ export default function App() {
           />
         </div>
       </div>
+
+      <section className="flex flex-col items-center mt-8 space-y-3">
+        <img
+          src="/retro-knight-dungeon.png"
+          alt="Dungeon Knight"
+          className="w-80 h-auto max-w-[350px] rounded-lg shadow-md"
+          loading="lazy"
+        />
+        <p className="text-sm text-gray-600 text-center">
+          Dungeon Knight to test throttle and offline capabilities
+        </p>
+      </section>
     </AppWrapper>
   );
 }

@@ -16,13 +16,28 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,png,svg,ico,json}'],
         runtimeCaching: [
           {
-            urlPattern: /^http:\/\/localhost:5173\//,
+            urlPattern: /^http:\/\/localhost:8080\//,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
               expiration: {
                 maxEntries: 50,
                 maxAgeSeconds: 86400
+              },
+              networkTimeoutSeconds: 3,
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'images-cache',
+              expiration: {
+                maxEntries: 30,
+                maxAgeSeconds: 86400 * 30 // 30 days
               }
             }
           }
