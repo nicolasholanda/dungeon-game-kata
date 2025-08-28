@@ -35,3 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Chaos Toolkit ###
+**/journal.json
+**/chaostoolkit.log
