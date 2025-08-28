@@ -27,6 +27,13 @@ export default defineConfig({
               networkTimeoutSeconds: 3,
               cacheableResponse: {
                 statuses: [0, 200]
+              },
+              // Background Sync para requisições que falharam
+              backgroundSync: {
+                name: 'api-sync-queue',
+                options: {
+                  maxRetentionTime: 24 * 60 // 24 horas em minutos
+                }
               }
             }
           },

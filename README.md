@@ -39,6 +39,5 @@
   ```shell
   npm i
   npm run dev # to run dev
-  npm build   # to make a build
-  npm start   # to serve the builded project
+  npm run build && npm run preview # to run prject build
   ```
