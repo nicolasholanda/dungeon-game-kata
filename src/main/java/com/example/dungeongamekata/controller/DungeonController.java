@@ -5,6 +5,7 @@ import com.example.dungeongamekata.dto.DungeonResponse;
 import com.example.dungeongamekata.exception.InvalidDungeonInputException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
+@Slf4j
 @Tag(name = "Dungeon", description = "Dungeon management API")
 @RestController
 public class DungeonController {
@@ -29,6 +31,7 @@ public class DungeonController {
     @PostMapping("/dungeon/solve")
     public DungeonResponse calculateMinimumHP(@RequestBody int[][] dungeonGrid) {
         validateInputGridForDungeon(dungeonGrid);
+        log.info("Received dungeon grid for calculation: {}x{}", dungeonGrid.length, dungeonGrid[0].length);
         return dungeonService.calculateMinimumHP(dungeonGrid);
     }
 
