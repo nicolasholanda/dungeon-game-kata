@@ -42,13 +42,6 @@ export function MatrixInputCard({ matrix, onMatrixChange }: MatrixInputCardProps
     }
   };
 
-  // Exemplo de função para carregar matriz, pode ser removida se não utilizada
-  // const loadExample = (exampleMatrix: Matrix) => {
-  //   const jsonString = matrixToJSON(exampleMatrix);
-  //   setInput(jsonString);
-  //   handleInputChange(jsonString);
-  // };
-
   const generateRandom = (rows: number, cols: number) => {
     const randomMatrix = generateRandomMatrix(rows, cols);
     const jsonString = matrixToJSON(randomMatrix);
