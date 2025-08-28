@@ -17,6 +17,8 @@ RUN ./gradlew --no-daemon clean bootJar
 
 # ---- Runtime stage ----
 FROM eclipse-temurin:21-jdk
+RUN apt-get update && \
+    apt-get install -y stress-ng
 WORKDIR /app
 COPY --from=build /app/build/libs/*.jar app.jar
 EXPOSE 8080
