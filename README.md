@@ -41,3 +41,30 @@
   npm run dev # to run dev
   npm run build && npm run preview # to run prject build
   ```
+
+## Chaos Engineering Setup
+
+Install Python and tools:
+```bash
+# Install Python 3 and pip
+sudo apt update
+sudo apt install python3 python3-pip
+
+# Install Chaos Toolkit
+pip install chaostoolkit
+
+# Install K6 extension for load testing
+pip install chaostoolkit-k6
+
+# Install K6
+sudo apt install k6
+```
+
+Run chaos experiments:
+```bash
+# Database failure test
+chaos run experiments/database-failure.json
+
+# Load test
+chaos run experiments/load-test.json
+```

@@ -1,0 +1,66 @@
+{
+  "version": "1.0.0",
+  "title": "Load Test with K6",
+  "description": "Load test using K6 to test dungeon solve endpoint",
+  "tags": [
+    "load",
+    "k6",
+    "performance"
+  ],
+  "configuration": {
+    "app_url": {
+      "type": "env",
+      "key": "APP_URL",
+      "default": "http://localhost:8080"
+    }
+  },
+  "steady-state-hypothesis": {
+    "title": "Application responds normally",
+    "probes": [
+      {
+        "name": "health-check",
+        "type": "probe",
+        "provider": {
+          "type": "http",
+          "url": "${app_url}/actuator/health"
+        },
+        "tolerance": {
+          "type": "range",
+          "range": [200, 299],
+          "target": "status"
+        }
+      }
+    ]
+  },
+  "method": [
+    {
+      "name": "load-test-dungeon-solve",
+      "type": "action",
+      "provider": {
+        "type": "python",
+        "module": "chaosk6.actions",
+        "func": "run_script",
+        "arguments": {
+          "script_path": "experiments/load-test.js",
+          "vus": 10,
+          "duration": "30s"
+        }
+      }
+    }
+  ],
+  "rollbacks": [
+    {
+      "name": "verify-health-after-load",
+      "type": "probe",
+      "provider": {
+        "type": "http",
+        "url": "${app_url}/actuator/health"
+      },
+      "tolerance": {
+        "type": "range",
+        "range": [200, 299],
+        "target": "status"
+      }
+    }
+  ]
+}
