@@ -16,7 +16,6 @@ import java.util.Optional;
 @Service
 public class DungeonService {
 
-
     private final ModelRunRepository modelRunRepository;
     private final ObjectMapper objectMapper;
 
@@ -25,6 +24,46 @@ public class DungeonService {
         this.objectMapper = objectMapper;
     }
 
+    public DungeonResponse calculateMinimumHP(int[][] dungeonGrid) {
+        String inputJson;
+        try {
+            inputJson = objectMapper.writeValueAsString(dungeonGrid);
+        } catch (Exception e) {
+            log.error("Error processing JSON for dungeon calculation", e);
+            throw new RuntimeException("Error processing JSON", e);
+        }
+
+        Optional<DungeonResponse> cachedResult = getCachedResult(inputJson);
+        if (cachedResult.isPresent()) {
+            return cachedResult.get();
+        }
+
+        DungeonResponse response = executeCalculateMinimumHP(dungeonGrid);
+        try {
+            saveCacheResult(inputJson, response);
+        } catch (Exception e) {
+            log.warn("Database unavailable for caching result, returning calculated response: {}", e.getMessage());
+        }
+
+        return response;
+    }
+
+    private Optional<DungeonResponse> getCachedResult(String inputJson) {
+        try {
+            Optional<ModelRun> existingRun = modelRunRepository.findByInput(inputJson);
+            if (existingRun.isPresent()) {
+                return Optional.of(objectMapper.readValue(existingRun.get().getOutput(), DungeonResponse.class));
+            }
+        } catch (Exception e) {
+            log.warn("Database unavailable for cache lookup, proceeding with calculation: {}", e.getMessage());
+        }
+        return Optional.empty();
+    }
+
+    private void saveCacheResult(String inputJson, DungeonResponse response) throws JsonProcessingException {
+        String outputJson = objectMapper.writeValueAsString(response);
+        modelRunRepository.save(ModelRun.of(inputJson, outputJson));
+    }
 
     /**
      * Calculate the minimum initial health required to rescue the princess in the dungeon.
@@ -71,39 +110,4 @@ public class DungeonService {
 
         return new DungeonResponse(dp[0][0], path);
     }
-
-    public DungeonResponse calculateMinimumHP(int[][] dungeonGrid){
-        try {
-            String inputJson = objectMapper.writeValueAsString(dungeonGrid);
-
-            // Find and return existing run if exists, but continue if database is unavailable
-            try {
-                Optional<ModelRun> existingRun = modelRunRepository.findByInput(inputJson);
-                if (existingRun.isPresent()) {
-                    return objectMapper.readValue(existingRun.get().getOutput(), DungeonResponse.class);
-                }
-            } catch (Exception e) {
-                log.warn("Database unavailable for cache lookup, proceeding with calculation: {}", e.getMessage());
-            }
-
-            // Do the calculation
-            DungeonResponse response = executeCalculateMinimumHP(dungeonGrid);
-
-            // Try to save the result, but skip if database is unavailable
-            try {
-                String outputJson = objectMapper.writeValueAsString(response);
-                modelRunRepository.save(ModelRun.of(inputJson, outputJson));
-            } catch (Exception e) {
-                log.warn("Database unavailable for caching result, returning calculated response: {}", e.getMessage());
-            }
-
-            return response;
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Error processing JSON", e);
-        }
-    }
-
-
-
 }
