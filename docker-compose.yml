@@ -29,7 +29,7 @@ services:
     labels:
       - "chaos.target=apps"
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8081/actuator/health | grep -q '\"status\":\"UP\"'"]
       interval: 10s
       timeout: 3s
       retries: 6
@@ -49,7 +49,7 @@ services:
     labels:
       - "chaos.target=apps"
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8081/actuator/health | grep -q '\"status\":\"UP\"'"]
       interval: 10s
       timeout: 3s
       retries: 6
@@ -69,7 +69,7 @@ services:
     labels:
       - "chaos.target=apps"
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"'"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8081/actuator/health | grep -q '\"status\":\"UP\"'"]
       interval: 10s
       timeout: 3s
       retries: 6
@@ -177,8 +177,8 @@ services:
         "netem","--duration","25s",
         # opção A: estrangula tudo que sai do app
         "rate","--rate","300kbit",
-        # opção B (apenas porta 8080):
-        # "--ingress-port","8080","rate","--rate","300kbit",
+        # opção B (apenas porta 8081):
+        # "--ingress-port","8081","rate","--rate","300kbit",
         "re2:^dungeon-game-kata-app(1|2|3)-\\d+$"
       ]
     depends_on: [app1, app2, app3]
