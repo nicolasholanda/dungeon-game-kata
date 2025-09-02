@@ -1,0 +1,3 @@
+chaostoolkit>=1.14
+chaostoolkit-spring==0.3.2
+

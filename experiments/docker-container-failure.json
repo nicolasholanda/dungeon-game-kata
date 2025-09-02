@@ -12,7 +12,7 @@
     "app_url": {
       "type": "env",
       "key": "APP_URL",
-      "default": "http://localhost:80"
+      "default": "http://localhost"
     }
   },
   "steady-state-hypothesis": {

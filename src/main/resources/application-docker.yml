@@ -9,3 +9,26 @@ spring:
       mode: never
 #      mode: always
       continue-on-error: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,chaosmonkey
+  endpoint:
+    health:
+      show-details: always
+    chaosmonkey:
+      enabled: true
+
+chaos:
+  monkey:
+    enabled: false
+    watcher:
+      restController: true
+    assaults:
+      level: 3
+      latencyActive: false
+      exceptionsActive: false
+      killApplicationActive: false
+      restartApplicationActive: false

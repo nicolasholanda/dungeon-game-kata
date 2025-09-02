@@ -56,8 +56,8 @@ pip install chaostoolkit
 # Install K6 extension for load testing
 pip install chaostoolkit-k6
 
-# Install K6
-sudo apt install k6
+# Install the Spring extension used by the new experiment
+pip install -r experiments/requirements.txt
 ```
 
 Run chaos experiments:
@@ -67,4 +67,17 @@ chaos run experiments/database-failure.json
 
 # Load test
 chaos run experiments/load-test.json
+
+# NEW: Enable Chaos Monkey and apply latency assaults to controllers
+chaos run experiments/spring-chaosmonkey.json
 ```
+
+Notes:
+- The application exposes the Chaos Monkey actuator endpoint at `/actuator/chaosmonkey` and is disabled by default via configuration.
+- The experiment will:
+  - verify Chaos Monkey is disabled,
+  - enable it,
+  - configure a latency assault (500–1500ms) for REST controllers,
+  - verify the configuration,
+  - and finally disable Chaos Monkey as a rollback.
+- Ensure the app is running locally on port 80 (or update the `base_url` in the experiment accordingly).
