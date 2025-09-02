@@ -1,5 +1,4 @@
-# from project root
-
+# to run the project:
 ```shell
   docker compose up --build
 ```
