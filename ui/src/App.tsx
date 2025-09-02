@@ -3,8 +3,9 @@ import { AppWrapper } from './components/AppShell';
 import { DungeonGrid } from './components/DungeonGrid';
 import { generateRandomMatrix, EXAMPLE_MATRICES, matrixToJSON } from './utils/matrix';
 import "./App.css"
+import { SimpleTestPanel } from './components/SimpleTestPanel';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
 
 export default function App() {
   const [matrix, setMatrix] = useState<string>('[[0,0,0],[0,0,0],[0,0,0]]');
@@ -147,6 +148,7 @@ export default function App() {
           Dungeon Knight to test throttle and offline capabilities
         </p>
       </section>
+      <SimpleTestPanel />
     </AppWrapper>
   );
 }
