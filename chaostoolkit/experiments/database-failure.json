@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "title": "Memory Exhaustion",
-  "description": "Test application resilience when memory is fully exhausted",
+  "title": "Database Connection Failure",
+  "description": "Test application resilience when database becomes unavailable",
   "tags": [
     "database",
     "infrastructure",
@@ -11,7 +11,7 @@
     "app_url": {
       "type": "env",
       "key": "APP_URL",
-      "default": "http://localhost:8080"
+      "default": "http://localhost:80"
     }
   },
   "steady-state-hypothesis": {
@@ -40,34 +40,30 @@
   "method": [
     {
       "type": "action",
-      "name": "consume-memory",
+      "name": "stop-database-container",
       "provider": {
         "type": "process",
         "path": "docker",
-        "arguments": [
-          "exec", "-d",
-          "dungeon-game-kata-app-1",
-          "stress-ng", "--vm", "1", "--vm-bytes", "90%", "--timeout", "120s"
-        ]
+        "arguments": ["stop", "dungeon-game-kata-db-1"]
       }
     },
     {
       "type": "probe",
-      "name": "memory-usage-percentage",
+      "name": "verify-database-is-down",
       "provider": {
-        "type": "process", 
+        "type": "process",
         "path": "docker",
         "arguments": [
-          "exec", "dungeon-game-kata-app-1",
-          "sh", "-c",
-          "sleep 10 ; free | awk 'NR==2{printf \"Memory Usage: %.2f%%\\n\", $3*100/($3+$7)}'"
+          "ps",
+          "--filter",
+          "name=dungeon-game-kata-db-1",
+          "--format",
+          "table {{.Names}}\t{{.Status}}"
         ]
       },
       "tolerance": {
         "type": "regex",
-        "target": "stdout", 
-        "pattern": "Memory Usage: ([0-9.]+)%",
-        "count": 1
+        "pattern": "Exited"
       }
     },
     {
@@ -92,15 +88,11 @@
   "rollbacks": [
     {
       "type": "action",
-      "name": "stop-stress-in-container",
+      "name": "restart-database-container",
       "provider": {
         "type": "process",
         "path": "docker",
-        "arguments": [
-          "exec",
-          "dungeon-game-kata-app-1",
-          "pkill", "-f", "stress-ng"
-        ]
+        "arguments": ["start", "dungeon-game-kata-db-1"]
       }
     },
     {

@@ -297,13 +297,19 @@ services:
 
   # Chaos Testing Tools (optional)
   chaos-toolkit:
-    image: chaostoolkit/chaostoolkit:latest
+    build: chaostoolkit
     volumes:
-      - ./chaos:/chaos
+      - ./chaostoolkit/experiments:/experiments
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    working_dir: /chaos
-    command: ["sleep", "infinity"]
+    working_dir: /experiments
+    command: ["run", "memory_exhastion.json", "--var", "app_url=http://haproxy:80"]
     profiles: ["chaos"]
+    networks:
+      - default
+    depends_on:
+      - app1
+      - app2
+      - app3
 
 volumes:
   pgdata:

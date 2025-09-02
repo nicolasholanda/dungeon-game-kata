@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "title": "Database Connection Failure",
-  "description": "Test application resilience when database becomes unavailable",
+  "title": "Memory Exhaustion",
+  "description": "Test application resilience when memory is fully exhausted",
   "tags": [
     "database",
     "infrastructure",
@@ -11,7 +11,7 @@
     "app_url": {
       "type": "env",
       "key": "APP_URL",
-      "default": "http://localhost:8080"
+      "default": "http://localhost:80"
     }
   },
   "steady-state-hypothesis": {
@@ -40,30 +40,34 @@
   "method": [
     {
       "type": "action",
-      "name": "stop-database-container",
-      "provider": {
-        "type": "process",
-        "path": "docker",
-        "arguments": ["stop", "dungeon-game-kata-db-1"]
-      }
-    },
-    {
-      "type": "probe",
-      "name": "verify-database-is-down",
+      "name": "consume-memory",
       "provider": {
         "type": "process",
         "path": "docker",
         "arguments": [
-          "ps",
-          "--filter",
-          "name=dungeon-game-kata-db-1",
-          "--format",
-          "table {{.Names}}\t{{.Status}}"
+          "exec", "-d",
+          "dungeon-game-kata-app-1",
+          "stress-ng", "--vm", "1", "--vm-bytes", "90%", "--timeout", "120s"
+        ]
+      }
+    },
+    {
+      "type": "probe",
+      "name": "memory-usage-percentage",
+      "provider": {
+        "type": "process", 
+        "path": "docker",
+        "arguments": [
+          "exec", "dungeon-game-kata-app-1",
+          "sh", "-c",
+          "sleep 10 ; free | awk 'NR==2{printf \"Memory Usage: %.2f%%\\n\", $3*100/($3+$7)}'"
         ]
       },
       "tolerance": {
         "type": "regex",
-        "pattern": "Exited"
+        "target": "stdout", 
+        "pattern": "Memory Usage: ([0-9.]+)%",
+        "count": 1
       }
     },
     {
@@ -88,11 +92,15 @@
   "rollbacks": [
     {
       "type": "action",
-      "name": "restart-database-container",
+      "name": "stop-stress-in-container",
       "provider": {
         "type": "process",
         "path": "docker",
-        "arguments": ["start", "dungeon-game-kata-db-1"]
+        "arguments": [
+          "exec",
+          "dungeon-game-kata-app-1",
+          "pkill", "-f", "stress-ng"
+        ]
       }
     },
     {
