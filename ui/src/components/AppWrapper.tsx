@@ -7,7 +7,7 @@ interface AppShellProps {
 export function AppWrapper({ children }: AppShellProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <header className="border-b bg-white/80 sticky top-0 z-50">
+      <header className="border-b bg-white/80 top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <h1 className="text-2xl font-bold text-slate-900">
             Dungeon Game Visualizer

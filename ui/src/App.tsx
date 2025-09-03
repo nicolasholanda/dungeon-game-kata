@@ -1,16 +1,42 @@
 import { useState } from 'react';
-import { AppWrapper } from './components/AppShell';
+import { AppWrapper } from './components/AppWrapper';
 import { DungeonGrid } from './components/DungeonGrid';
 import { generateRandomMatrix, EXAMPLE_MATRICES, matrixToJSON } from './utils/matrix';
+import { useRequestHistory } from './hooks/useRequestHistory';
 import "./App.css"
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
 
 export default function App() {
   const [matrix, setMatrix] = useState<string>('[[0,0,0],[0,0,0],[0,0,0]]');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ minimumHP: number; path: number[][] } | null>({ minimumHP: 0, path: [] });
   const [error, setError] = useState<string | null>(null);
+  
+  const { addToHistory, getHistory, findCachedResult } = useRequestHistory();
+
+  // Debug function - accessible via console
+  (window as any).getRequestHistory = getHistory;
+
+  // Common api network errors
+  const isApiOffline = (error: Error): boolean => {
+    const message = error.message.toLowerCase();
+    const name = error.name.toLowerCase();
+    
+    // Casos comuns de API offline
+    return (
+      message.includes('failed to fetch') ||           // Erro mais comum quando API está offline
+      message.includes('network error') ||             // Erro de rede genérico
+      message.includes('fetch error') ||               // Erro de fetch genérico
+      message.includes('connection refused') ||        // Conexão recusada
+      message.includes('net::err_connection_refused') || // Chrome specific
+      message.includes('net::err_network_changed') ||  // Rede mudou
+      message.includes('net::err_internet_disconnected') || // Internet desconectada
+      name.includes('typeerror') ||                    // TypeError comum em problemas de rede
+      error.name === 'AbortError' ||                   // Timeout/abort
+      message.includes('aborted')                      // Request abortada
+    );
+  };
 
   const handleMatrixSelect = (type: string) => {
     const matrixGenerators: Record<string, () => string> = {
@@ -33,11 +59,13 @@ export default function App() {
   };
 
   async function handleSolve() {
+    const startTime = Date.now();
     setLoading(true);
     setError(null);
     setResult(null);
 
     try {
+      // AbortController interface represents a controller object that allows you to abort one or more Web requests as and when desired. (MDN)
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
 
@@ -53,19 +81,42 @@ export default function App() {
       if (!res.ok) throw new Error(`API Error: ${res.status} ${res.statusText}`);
       const data = await res.json();
       setResult(data);
+      
+      const duration = Date.now() - startTime;
+      addToHistory(matrix, data, null, duration);
 
     } catch (err: Error | unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const error = err instanceof Error ? err : new Error('Unknown error');
+      const errorMessage = error.message;
 
-      if (errorMessage.includes('aborted') || errorMessage.includes('NetworkError')) {
-        setError('⚠️ API unavailable - Using offline mode. Please try again when the connection is restored.');
-        // Simulate offline result for demonstration  
-        setResult({
-          minimumHP: -1,
-          path: [[0, 0], [0, 1], [0, 2]]
-        });
+      // Verifica se é um erro que indica API offline
+      if (isApiOffline(error)) {
+        console.log('API detected as offline:', errorMessage);
+        
+        // Tenta buscar resultado em cache quando API está offline
+        const cachedResult = findCachedResult(matrix);
+        
+        if (cachedResult && cachedResult.result) {
+          setResult(cachedResult.result);
+          setError('📁 API offline - Resultado encontrado no cache local');
+          
+          // Registra que usou cache
+          const duration = Date.now() - startTime;
+          addToHistory(matrix, cachedResult.result, 'Used cached result (API offline)', duration);
+        } else {
+          setError('⚠️ API unavailable and no cached result found. Please try again when the connection is restored.');
+          
+          // Não simula resultado falso quando não há cache
+          const duration = Date.now() - startTime;
+          addToHistory(matrix, null, `API offline: ${errorMessage}`, duration);
+        }
       } else {
-        setError(errorMessage);
+        // Outros tipos de erro (400, 500, etc.)
+        setError(`Erro da API: ${errorMessage}`);
+        
+        // Salva no localStorage
+        const duration = Date.now() - startTime;
+        addToHistory(matrix, null, errorMessage, duration);
       }
     } finally {
       setLoading(false);
