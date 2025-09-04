@@ -1,13 +1,20 @@
 {
   "version": "1.0.0",
   "title": "Enable Chaos Monkey and apply latency assault",
-  "description": "Uses chaostoolkit-spring to enable Chaos Monkey, configure assaults, and verify configuration.",
+  "description": "Uses chaostoolkit-spring to enable Chaos Monkey, configure latency assault, and verify it.",
   "tags": ["spring", "chaosmonkey", "latency"],
+  "configuration": {
+    "base_url": {
+      "type": "env",
+      "key": "APP_URL",
+      "default": "http://localhost/actuator"
+    }
+  },
   "steady-state-hypothesis": {
-    "title": "Chaos Monkey assaults are disabled by default",
+    "title": "Chaos Monkey is disabled by default",
     "probes": [
       {
-        "name": "assaults-disabled-by-default",
+        "name": "chaosmonkey-disabled-by-default",
         "type": "probe",
         "tolerance": false,
         "provider": {
@@ -15,12 +22,7 @@
           "module": "chaosspring.probes",
           "func": "chaosmonkey_enabled",
           "arguments": {
-        "provider": {
-          "type": "python",
-          "module": "chaosspring.probes",
-          "func": "assaults_configuration",
-          "arguments": {
-            "base_url": "http://localhost/actuator"
+            "base_url": "${base_url}"
           }
         }
       }
@@ -35,7 +37,7 @@
         "module": "chaosspring.actions",
         "func": "enable_chaosmonkey",
         "arguments": {
-          "base_url": "http://localhost/actuator"
+          "base_url": "${base_url}"
         }
       }
     },
@@ -47,7 +49,7 @@
         "module": "chaosspring.actions",
         "func": "change_assaults_configuration",
         "arguments": {
-          "base_url": "http://localhost/actuator",
+          "base_url": "${base_url}",
           "assaults_configuration": {
             "level": 5,
             "latencyRangeStart": 500,
@@ -61,17 +63,15 @@
       }
     },
     {
-      "name": "verify-assaults-configuration",
+      "name": "verify-chaosmonkey-enabled",
       "type": "probe",
-            "restartApplicationActive": false
-          }
-        }
+      "tolerance": true,
       "provider": {
         "type": "python",
         "module": "chaosspring.probes",
-        "func": "assaults_configuration",
+        "func": "chaosmonkey_enabled",
         "arguments": {
-          "base_url": "http://localhost/actuator"
+          "base_url": "${base_url}"
         }
       }
     }
@@ -85,7 +85,7 @@
         "module": "chaosspring.actions",
         "func": "disable_chaosmonkey",
         "arguments": {
-          "base_url": "http://localhost/actuator"
+          "base_url": "${base_url}"
         }
       }
     },
@@ -97,7 +97,7 @@
         "module": "chaosspring.actions",
         "func": "change_assaults_configuration",
         "arguments": {
-          "base_url": "http://localhost/actuator",
+          "base_url": "${base_url}",
           "assaults_configuration": {
             "level": 3,
             "latencyActive": false,
