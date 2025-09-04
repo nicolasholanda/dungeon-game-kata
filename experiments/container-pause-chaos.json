@@ -1,0 +1,163 @@
+{
+  "version": "1.0.0",
+  "title": "Container Pause Chaos Experiment",
+  "description": "Randomly pause application containers",
+  "tags": [
+    "container",
+    "pause",
+    "pumba",
+    "infrastructure"
+  ],
+  "configuration": {
+    "target_pattern": {
+      "type": "env",
+      "key": "TARGET_PATTERN",
+      "default": "re2:^dungeon-game-kata-app(1|2|3)-\\d+$"
+    },
+    "pause_duration": {
+      "type": "env",
+      "key": "PAUSE_DURATION",
+      "default": "40s"
+    }
+  },
+  "steady-state-hypothesis": {
+    "title": "Application containers are running and can solve dungeon challenges",
+    "probes": [
+      {
+        "name": "check-app-containers-running",
+        "type": "probe",
+        "provider": {
+          "type": "process",
+          "path": "docker",
+          "arguments": ["ps", "--filter", "label=chaos.target=apps", "--format", "{{.Names}}"]
+        },
+        "tolerance": {
+          "type": "regex",
+          "target": "stdout",
+          "pattern": "dungeon-game-kata-app"
+        }
+      },
+      {
+        "name": "check-dungeon-solving-capability",
+        "type": "probe",
+        "provider": {
+          "type": "http",
+          "url": "http://localhost:80/dungeon/solve",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "arguments": [[1, -3, 3], [0, -2, 0], [-3, -3, -3]]
+        },
+        "tolerance": {
+          "type": "range",
+          "range": [200, 299],
+          "target": "status"
+        }
+      }
+    ]
+  },
+  "method": [
+    {
+      "name": "pause-random-app-container",
+      "type": "action",
+      "provider": {
+        "type": "process",
+        "path": "bash",
+        "arguments": [
+          "-c",
+          "pumba --log-level info --random pause --duration ${pause_duration} --limit 1 '${target_pattern}' > /tmp/pumba.log 2>&1 &"
+        ]
+      },
+      "pauses": {
+        "after": 10
+      }
+    },
+    {
+      "name": "verify-container-paused",
+      "type": "probe",
+      "provider": {
+        "type": "process",
+        "path": "docker",
+        "arguments": ["ps", "--filter", "status=paused", "--format", "{{.Names}}"]
+      },
+      "tolerance": {
+        "type": "regex",
+        "target": "stdout",
+        "pattern": "dungeon-game-kata-app"
+      }
+    }
+  ],
+  "rollbacks": [
+    {
+      "name": "wait-for-container-to-resume",
+      "type": "probe",
+      "provider": {
+        "type": "process",
+        "path": "sleep",
+        "arguments": ["30"]
+      }
+    },
+    {
+      "name": "verify-container-resumed",
+      "type": "probe",
+      "provider": {
+        "type": "process",
+        "path": "docker",
+        "arguments": ["ps", "--filter", "status=running", "--filter", "label=chaos.target=apps", "--format", "{{.Names}}"]
+      },
+      "tolerance": {
+        "type": "regex",
+        "target": "stdout",
+        "pattern": "dungeon-game-kata-app"
+      }
+    },
+    {
+      "name": "ensure-all-containers-running",
+      "type": "action",
+      "provider": {
+        "type": "process",
+        "path": "bash",
+        "arguments": [
+          "-c",
+          "for container in $(docker ps -a --filter 'status=paused' --filter 'label=chaos.target=apps' --format '{{.Names}}'); do echo \"Unpausing $container\"; docker unpause \"$container\" || true; done"
+        ]
+      }
+    },
+    {
+      "name": "verify-all-containers-running",
+      "type": "probe",
+      "provider": {
+        "type": "process",
+        "path": "bash",
+        "arguments": [
+          "-c",
+          "docker ps --filter 'label=chaos.target=apps' --filter 'status=running' --format '{{.Names}}' | wc -l"
+        ]
+      },
+      "tolerance": {
+        "type": "range",
+        "range": [3, 3],
+        "target": "stdout"
+      }
+    },
+    {
+      "name": "verify-dungeon-solving-restored",
+      "type": "probe",
+      "provider": {
+        "type": "http",
+        "url": "http://localhost:80/dungeon/solve",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "arguments": [[1, -3, 3], [0, -2, 0], [-3, -3, -3]]
+      },
+      "tolerance": {
+        "type": "range",
+        "range": [200, 299],
+        "target": "status"
+      }
+    }
+  ]
+}
