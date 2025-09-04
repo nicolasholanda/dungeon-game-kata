@@ -8,8 +8,15 @@ spring:
 
   sql:
     init:
-      mode: always #
+      mode: never
       continue-on-error: true
+
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: none
 
 server:
   address: 0.0.0.0

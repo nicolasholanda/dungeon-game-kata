@@ -1,0 +1,155 @@
+{
+  "version": "1.0.0",
+  "title": "Invalid Input Flooding",
+  "description": "Test application resilience when bombarded with malformed requests to validate error handling under load",
+  "tags": [
+    "validation",
+    "error-handling",
+    "load",
+    "ddos-simulation"
+  ],
+  "configuration": {
+    "app_url": {
+      "type": "env",
+      "key": "APP_URL",
+      "default": "http://localhost:8080"
+    },
+    "flood_duration": {
+      "type": "env",
+      "key": "FLOOD_DURATION",
+      "default": "30"
+    },
+    "concurrent_requests": {
+      "type": "env",
+      "key": "CONCURRENT_REQUESTS",
+      "default": "20"
+    }
+  },
+  "steady-state-hypothesis": {
+    "title": "Application responds normally to valid requests",
+    "probes": [
+      {
+        "name": "health-check",
+        "type": "probe",
+        "provider": {
+          "type": "http",
+          "url": "${app_url}/actuator/health"
+        },
+        "tolerance": {
+          "type": "range",
+          "range": [200, 299],
+          "target": "status"
+        }
+      },
+      {
+        "name": "valid-request-baseline",
+        "type": "probe",
+        "provider": {
+          "type": "http",
+          "url": "${app_url}/dungeon/solve",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "arguments": [[1, 2], [3, 4]]
+        },
+        "tolerance": {
+          "type": "range",
+          "range": [200, 299],
+          "target": "status"
+        }
+      }
+    ]
+  },
+  "method": [
+    {
+      "type": "action",
+      "name": "invalid-input-flood-with-k6",
+      "provider": {
+        "type": "python",
+        "module": "chaosk6.actions",
+        "func": "run_script",
+        "arguments": {
+          "script_path": "experiments/invalid-input-flooding.js",
+          "vus": "${concurrent_requests}",
+          "duration": "${flood_duration}s"
+        }
+      }
+    },
+    {
+      "type": "probe",
+      "name": "check-health-during-flood",
+      "provider": {
+        "type": "http",
+        "url": "${app_url}/actuator/health",
+        "timeout": 30
+      },
+      "tolerance": {
+        "type": "range",
+        "range": [200, 599],
+        "target": "status"
+      }
+    },
+    {
+      "type": "probe",
+      "name": "check-valid-request-during-flood",
+      "provider": {
+        "type": "http",
+        "url": "${app_url}/dungeon/solve",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "arguments": [[1, 2], [3, 4]],
+        "timeout": 30
+      },
+      "tolerance": {
+        "type": "range",
+        "range": [200, 599],
+        "target": "status"
+      }
+    }
+  ],
+  "rollbacks": [
+    {
+      "type": "probe",
+      "name": "wait-for-recovery",
+      "provider": {
+        "type": "process",
+        "path": "sleep",
+        "arguments": ["10"]
+      }
+    },
+    {
+      "type": "probe",
+      "name": "verify-health-after-flood",
+      "provider": {
+        "type": "http",
+        "url": "${app_url}/actuator/health"
+      },
+      "tolerance": {
+        "type": "range",
+        "range": [200, 299],
+        "target": "status"
+      }
+    },
+    {
+      "type": "probe",
+      "name": "verify-valid-request-works",
+      "provider": {
+        "type": "http",
+        "url": "${app_url}/dungeon/solve",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "arguments": [[1, 2], [3, 4]]
+      },
+      "tolerance": {
+        "type": "range",
+        "range": [200, 299],
+        "target": "status"
+      }
+    }
+  ]
+}
