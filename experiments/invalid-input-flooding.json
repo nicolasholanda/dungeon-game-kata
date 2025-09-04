@@ -12,7 +12,7 @@
     "app_url": {
       "type": "env",
       "key": "APP_URL",
-      "default": "http://localhost:8080"
+      "default": "http://localhost:80"
     },
     "flood_duration": {
       "type": "env",

@@ -58,6 +58,21 @@ pip install chaostoolkit-k6
 
 # Install K6
 sudo apt install k6
+
+# Install reporting extension (optional)
+pip install chaostoolkit-reporting
+
+# Install Cairo graphics library (required for reporting)
+sudo apt-get install libcairo2-dev
+
+sudo wget -q https://github.com/jgm/pandoc/releases/download/3.7.0.2/pandoc-3.7.0.2-linux-amd64.tar.gz \
+  && sudo tar -xzf pandoc-3.7.0.2-linux-amd64.tar.gz \
+  && sudo cp -r pandoc-3.7.0.2/bin/* /usr/local/bin/ \
+  && sudo rm -rf pandoc-3.7.0.2*
+
+# Install Pumba for Docker chaos experiments
+sudo curl -L https://github.com/alexei-led/pumba/releases/download/0.11.6/pumba_linux_amd64  -o /usr/local/bin/pumba
+sudo chmod +x /usr/local/bin/pumba
 ```
 
 Run chaos experiments:

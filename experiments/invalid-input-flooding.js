@@ -42,7 +42,7 @@ const wrongContentTypes = [
 ];
 
 export default function() {
-  const url = 'http://localhost:8080/dungeon/solve';
+  const url = 'http://localhost:80/dungeon/solve';
 
   // Randomly pick an invalid payload
   const payload = invalidPayloads[Math.floor(Math.random() * invalidPayloads.length)];
