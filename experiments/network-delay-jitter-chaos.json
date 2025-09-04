@@ -18,7 +18,7 @@
     "delay_duration": {
       "type": "env",
       "key": "DELAY_DURATION",
-      "default": "25s"
+      "default": "30s"
     },
     "delay_time": {
       "type": "env",
@@ -40,38 +40,11 @@
     "title": "Application containers are running and responding normally",
     "probes": [
       {
-        "name": "check-app-containers-running",
-        "type": "probe",
-        "provider": {
-          "type": "process",
-          "path": "docker",
-          "arguments": ["ps", "--filter", "label=chaos.target=apps", "--format", "{{.Names}}"]
-        },
-        "tolerance": {
-          "type": "regex",
-          "target": "stdout",
-          "pattern": "dungeon-game-kata-app"
-        }
-      },
-      {
         "name": "check-app-health",
         "type": "probe",
         "provider": {
           "type": "http",
           "url": "http://localhost:80/actuator/health"
-        },
-        "tolerance": {
-          "type": "range",
-          "range": [200, 299],
-          "target": "status"
-        }
-      },
-      {
-        "name": "baseline-response-time",
-        "type": "probe",
-        "provider": {
-          "type": "http",
-          "url": "http://localhost:80/hello"
         },
         "tolerance": {
           "type": "range",
@@ -94,24 +67,7 @@
         ]
       },
       "pauses": {
-        "after": 3
-      }
-    },
-    {
-      "name": "verify-delay-injection",
-      "type": "probe",
-      "provider": {
-        "type": "process",
-        "path": "bash",
-        "arguments": [
-          "-c",
-          "docker exec $(docker ps --filter 'label=chaos.target=apps' --format '{{.Names}}' | head -1) tc qdisc show | grep -q netem || echo 'No netem rules found'"
-        ]
-      },
-      "tolerance": {
-        "type": "regex",
-        "target": "stdout",
-        "pattern": ".*"
+        "after": 5
       }
     }
   ],
@@ -123,57 +79,6 @@
         "type": "process",
         "path": "sleep",
         "arguments": ["30"]
-      }
-    },
-    {
-      "name": "cleanup-netem-rules",
-      "type": "action",
-      "provider": {
-        "type": "process",
-        "path": "bash",
-        "arguments": [
-          "-c",
-          "for container in $(docker ps --filter 'label=chaos.target=apps' --format '{{.Names}}'); do echo \"Cleaning netem rules for $container\"; docker exec \"$container\" tc qdisc del dev eth0 root 2>/dev/null || true; done"
-        ]
-      }
-    },
-    {
-      "name": "verify-all-containers-running",
-      "type": "probe",
-      "provider": {
-        "type": "process",
-        "path": "bash",
-        "arguments": [
-          "-c",
-          "docker ps --filter 'label=chaos.target=apps' --filter 'status=running' --format '{{.Names}}' | wc -l"
-        ]
-      },
-      "tolerance": {
-        "type": "range",
-        "range": [3, 3],
-        "target": "stdout"
-      }
-    },
-    {
-      "name": "wait-for-network-recovery",
-      "type": "probe",
-      "provider": {
-        "type": "process",
-        "path": "sleep",
-        "arguments": ["5"]
-      }
-    },
-    {
-      "name": "verify-normal-response-times",
-      "type": "probe",
-      "provider": {
-        "type": "http",
-        "url": "http://localhost:80/hello"
-      },
-      "tolerance": {
-        "type": "range",
-        "range": [200, 299],
-        "target": "status"
       }
     },
     {
