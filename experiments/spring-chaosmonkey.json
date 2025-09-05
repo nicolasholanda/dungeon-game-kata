@@ -11,24 +11,34 @@
     }
   },
   "steady-state-hypothesis": {
-    "title": "Chaos Monkey is disabled by default",
+    "title": "Service is healthy",
     "probes": [
       {
-        "name": "chaosmonkey-disabled-by-default",
+        "name": "health-check",
         "type": "probe",
-        "tolerance": false,
+        "tolerance": { "type": "range", "range": [200, 299], "target": "status" },
         "provider": {
-          "type": "python",
-          "module": "chaosspring.probes",
-          "func": "chaosmonkey_enabled",
-          "arguments": {
-            "base_url": "${base_url}"
-          }
+          "type": "http",
+          "url": "${base_url}/health",
+          "timeout": 5,
+          "method": "GET"
         }
       }
     ]
   },
   "method": [
+    {
+      "name": "ensure-chaosmonkey-disabled",
+      "type": "action",
+      "provider": {
+        "type": "python",
+        "module": "chaosspring.actions",
+        "func": "disable_chaosmonkey",
+        "arguments": {
+          "base_url": "${base_url}"
+        }
+      }
+    },
     {
       "name": "enable-chaosmonkey",
       "type": "action",
