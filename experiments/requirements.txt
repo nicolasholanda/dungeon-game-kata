@@ -1,3 +1,4 @@
-chaostoolkit>=1.14
-chaostoolkit-spring==0.3.2
+chaostoolkit
+chaostoolkit-k6
+chaostoolkit-spring
 

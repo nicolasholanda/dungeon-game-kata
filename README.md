@@ -5,11 +5,13 @@
 
 ## Server
 
-`http://localhost:8080`
+`http://localhost:80` via HAProxy (routes to app1/app2 at 8081 and app3 at 9050)
+Direct containers:
+- app3 (Chaos Monkey profile): `http://localhost:9050`
 
 ## Swagger UI
 
-`http://localhost:8080/swagger-ui.html`
+`http://localhost:80/swagger-ui.html`
 
 ## REST endpoints
 
@@ -24,7 +26,7 @@
 
   ## Testing it
 
-  curl -s -X POST http://localhost:8080/dungeon/solve \
+  curl -s -X POST http://localhost:80/dungeon/solve \
    -H "Content-Type: application/json" \
    -d '[[1,-3,3],[0,-2,0],[-3,-3,-3]]'
 
@@ -49,13 +51,7 @@ Install Python and tools:
 sudo apt update
 sudo apt install python3 python3-pip
 
-# Install Chaos Toolkit
-pip install chaostoolkit
-
-# Install K6 extension for load testing
-pip install chaostoolkit-k6
-
-# Install the Spring extension used by the new experiment
+# Install Chaos Toolkit and Spring extension
 pip install -r experiments/requirements.txt
 ```
 
@@ -67,16 +63,15 @@ chaos run experiments/database-failure.json
 # Load test
 chaos run experiments/load-test.json
 
-# NEW: Enable Chaos Monkey and apply latency assaults to controllers
+# Enable Chaos Monkey and apply latency assaults to controllers
+# Target app3's actuator directly (published on :9050)
+export APP_URL=http://localhost:9050/actuator
 chaos run experiments/spring-chaosmonkey.json
 ```
 
 Notes:
-- The application exposes the Chaos Monkey actuator endpoint at `/actuator/chaosmonkey` and is disabled by default via configuration.
-- The experiment will:
-  - verify Chaos Monkey is disabled,
-  - enable it,
-  - configure a latency assault (500–1500ms) for REST controllers,
-  - verify the configuration,
-  - and finally disable Chaos Monkey as a rollback.
-- Ensure the app is running locally on port 80 (or update the `base_url` in the experiment accordingly).
+- Actuator exposes the Chaos Monkey endpoint id `chaosmonkey` (see application.yml) 
+- and watchers are off by default (`chaos.monkey.enabled: false`).
+- The Spring experiment enforces a baseline by first disabling Chaos Monkey,
+- then enabling it and configuring a latency assault (500–1500ms),
+- and finally verifying it's enabled; it rolls back by disabling and resetting assaults.
