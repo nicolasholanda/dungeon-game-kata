@@ -14,6 +14,6 @@ export default function() {
 
   check(response, {
     'status is 200': (r) => r.status === 200,
-    'response time < 5000ms': (r) => r.timings.duration < 5000,
+    'response time < 1000ms': (r) => r.timings.duration < 1000,
   });
 }

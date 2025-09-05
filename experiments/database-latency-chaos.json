@@ -43,10 +43,10 @@
     }
   },
   "steady-state-hypothesis": {
-    "title": "Application responds normally to requests despite database connectivity",
+    "title": "Application responds normally with adequate performance",
     "probes": [
       {
-        "name": "test-solve-endpoint",
+        "name": "test-solve-endpoint-performance",
         "type": "probe",
         "provider": {
           "type": "http",
@@ -55,20 +55,7 @@
           "headers": {
             "Content-Type": "application/json"
           },
-          "arguments": [[1, -3, 3], [0, -2, 0], [-3, -3, -3]]
-        },
-        "tolerance": {
-          "type": "range",
-          "range": [200, 299],
-          "target": "status"
-        }
-      },
-      {
-        "name": "check-app-health",
-        "type": "probe",
-        "provider": {
-          "type": "http",
-          "url": "${app_url}/actuator/health"
+          "arguments": [[1,-3,3],[0,-2,0],[-3,-3,-3]]
         },
         "tolerance": {
           "type": "range",

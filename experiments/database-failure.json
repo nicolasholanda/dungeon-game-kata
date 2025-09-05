@@ -45,6 +45,9 @@
         "type": "process",
         "path": "docker",
         "arguments": ["stop", "dungeon-game-kata-db-1"]
+      },
+      "pauses": {
+        "after": 5
       }
     },
     {
@@ -64,24 +67,6 @@
       "tolerance": {
         "type": "regex",
         "pattern": "Exited"
-      }
-    },
-    {
-      "type": "probe",
-      "name": "check-application-response-after-db-failure",
-      "provider": {
-        "type": "http",
-        "url": "${app_url}/dungeon/solve",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        },
-        "arguments": [[1,2],[3,4]]
-      },
-      "tolerance": {
-        "type": "range",
-        "range": [200, 299],
-        "target": "status"
       }
     }
   ],

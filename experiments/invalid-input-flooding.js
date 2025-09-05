@@ -56,13 +56,13 @@ export default function() {
     headers: {
       'Content-Type': contentType,
     },
-    timeout: '10s',
+    timeout: '1s',
   };
 
   let response = http.post(url, payload, params);
 
   check(response, {
-    'responds within 10s': (r) => r.timings.duration < 10000,
+    'responds within 1s': (r) => r.timings.duration < 1000,
     'returns some response': (r) => r.status > 0,
     'not 5xx server error': (r) => r.status < 500 || r.status >= 600,
   });

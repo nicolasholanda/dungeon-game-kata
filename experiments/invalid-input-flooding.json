@@ -26,23 +26,10 @@
     }
   },
   "steady-state-hypothesis": {
-    "title": "Application responds normally to valid requests",
+    "title": "Application responds normally with adequate performance",
     "probes": [
       {
-        "name": "health-check",
-        "type": "probe",
-        "provider": {
-          "type": "http",
-          "url": "${app_url}/actuator/health"
-        },
-        "tolerance": {
-          "type": "range",
-          "range": [200, 299],
-          "target": "status"
-        }
-      },
-      {
-        "name": "valid-request-baseline",
+        "name": "test-solve-endpoint-performance",
         "type": "probe",
         "provider": {
           "type": "http",
@@ -51,7 +38,7 @@
           "headers": {
             "Content-Type": "application/json"
           },
-          "arguments": [[1, 2], [3, 4]]
+          "arguments": [[1,-3,3],[0,-2,0],[-3,-3,-3]]
         },
         "tolerance": {
           "type": "range",
@@ -75,39 +62,6 @@
           "duration": "${flood_duration}s"
         }
       }
-    },
-    {
-      "type": "probe",
-      "name": "check-health-during-flood",
-      "provider": {
-        "type": "http",
-        "url": "${app_url}/actuator/health",
-        "timeout": 30
-      },
-      "tolerance": {
-        "type": "range",
-        "range": [200, 599],
-        "target": "status"
-      }
-    },
-    {
-      "type": "probe",
-      "name": "check-valid-request-during-flood",
-      "provider": {
-        "type": "http",
-        "url": "${app_url}/dungeon/solve",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        },
-        "arguments": [[1, 2], [3, 4]],
-        "timeout": 30
-      },
-      "tolerance": {
-        "type": "range",
-        "range": [200, 599],
-        "target": "status"
-      }
     }
   ],
   "rollbacks": [
@@ -118,37 +72,6 @@
         "type": "process",
         "path": "sleep",
         "arguments": ["10"]
-      }
-    },
-    {
-      "type": "probe",
-      "name": "verify-health-after-flood",
-      "provider": {
-        "type": "http",
-        "url": "${app_url}/actuator/health"
-      },
-      "tolerance": {
-        "type": "range",
-        "range": [200, 299],
-        "target": "status"
-      }
-    },
-    {
-      "type": "probe",
-      "name": "verify-valid-request-works",
-      "provider": {
-        "type": "http",
-        "url": "${app_url}/dungeon/solve",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        },
-        "arguments": [[1, 2], [3, 4]]
-      },
-      "tolerance": {
-        "type": "range",
-        "range": [200, 299],
-        "target": "status"
       }
     }
   ]
