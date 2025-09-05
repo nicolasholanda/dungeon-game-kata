@@ -42,7 +42,7 @@ const wrongContentTypes = [
 ];
 
 export default function() {
-  const url = 'http://localhost:8080/dungeon/solve';
+  const url = 'http://localhost:80/dungeon/solve';
 
   // Randomly pick an invalid payload
   const payload = invalidPayloads[Math.floor(Math.random() * invalidPayloads.length)];
@@ -55,17 +55,10 @@ export default function() {
   const params = {
     headers: {
       'Content-Type': contentType,
-    },
-    timeout: '10s',
+    }
   };
 
   let response = http.post(url, payload, params);
-
-  check(response, {
-    'responds within 10s': (r) => r.timings.duration < 10000,
-    'returns some response': (r) => r.status > 0,
-    'not 5xx server error': (r) => r.status < 500 || r.status >= 600,
-  });
 
   // Small delay to prevent overwhelming the server completely
   sleep(0.1);

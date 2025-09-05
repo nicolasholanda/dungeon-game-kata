@@ -2,7 +2,7 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 
 export default function() {
-  const url = 'http://localhost:8080/dungeon/solve';
+  const url = 'http://localhost:80/dungeon/solve';
   const payload = JSON.stringify([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
   const params = {
     headers: {
@@ -14,6 +14,6 @@ export default function() {
 
   check(response, {
     'status is 200': (r) => r.status === 200,
-    'response time < 5000ms': (r) => r.timings.duration < 5000,
+    'response time < 1000ms': (r) => r.timings.duration < 1000,
   });
 }

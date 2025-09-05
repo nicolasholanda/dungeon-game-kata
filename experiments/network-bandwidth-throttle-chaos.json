@@ -1,0 +1,79 @@
+{
+  "version": "1.0.0",
+  "title": "Network Bandwidth Throttling Chaos Experiment",
+  "description": "Throttle network bandwidth to 300kbit to test application under limited network",
+  "tags": [
+    "network",
+    "bandwidth",
+    "throttling",
+    "rate-limit",
+    "netem",
+    "pumba"
+  ],
+  "configuration": {
+    "app_url": {
+      "type": "env",
+      "key": "app_url",
+      "default": "http://localhost:80"
+    },
+    "target_pattern": {
+      "type": "env",
+      "key": "TARGET_PATTERN",
+      "default": "re2:^dungeon-game-kata-app(1|2|3)-\\d+$"
+    },
+    "throttle_duration": {
+      "type": "env",
+      "key": "THROTTLE_DURATION",
+      "default": "25s"
+    },
+    "bandwidth_rate": {
+      "type": "env",
+      "key": "BANDWIDTH_RATE",
+      "default": "300kbit"
+    }
+  },
+  "steady-state-hypothesis": {
+    "title": "Application meets SLA requirements and responds normally",
+    "probes": [
+      {
+        "name": "sla-compliance-check",
+        "type": "probe",
+        "provider": {
+          "type": "process",
+          "path": "k6",
+          "arguments": ["run", "--quiet", "experiments/sla_check_probe.js"]
+        },
+        "tolerance": 0
+      }
+    ]
+  },
+  "method": [
+    {
+      "name": "throttle-network-bandwidth",
+      "type": "action",
+      "provider": {
+        "type": "process",
+        "path": "bash",
+        "arguments": [
+          "-c",
+          "pumba --log-level info --random netem --duration ${throttle_duration} rate --rate ${bandwidth_rate} '${target_pattern}' > /tmp/pumba-bandwidth.log 2>&1 &"
+        ]
+      },
+      "pauses": {
+        "after": 5
+      }
+    }
+  ],
+  "rollbacks": [
+    {
+      "name": "wait-for-throttling-to-complete",
+      "type": "probe",
+      "provider": {
+        "type": "process",
+        "path": "sleep",
+        "arguments": ["30"]
+      }
+    }
+  ]
+}
+

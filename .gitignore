@@ -39,3 +39,4 @@ out/
 ### Chaos Toolkit ###
 **/journal.json
 **/chaostoolkit.log
+**/report.html

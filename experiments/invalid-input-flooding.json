@@ -12,7 +12,7 @@
     "app_url": {
       "type": "env",
       "key": "APP_URL",
-      "default": "http://localhost:8080"
+      "default": "http://localhost:80"
     },
     "flood_duration": {
       "type": "env",
@@ -26,38 +26,17 @@
     }
   },
   "steady-state-hypothesis": {
-    "title": "Application responds normally to valid requests",
+    "title": "Application meets SLA requirements and responds normally",
     "probes": [
       {
-        "name": "health-check",
+        "name": "sla-compliance-check",
         "type": "probe",
         "provider": {
-          "type": "http",
-          "url": "${app_url}/actuator/health"
+          "type": "process",
+          "path": "k6",
+          "arguments": ["run", "--quiet", "experiments/sla_check_probe.js"]
         },
-        "tolerance": {
-          "type": "range",
-          "range": [200, 299],
-          "target": "status"
-        }
-      },
-      {
-        "name": "valid-request-baseline",
-        "type": "probe",
-        "provider": {
-          "type": "http",
-          "url": "${app_url}/dungeon/solve",
-          "method": "POST",
-          "headers": {
-            "Content-Type": "application/json"
-          },
-          "arguments": [[1, 2], [3, 4]]
-        },
-        "tolerance": {
-          "type": "range",
-          "range": [200, 299],
-          "target": "status"
-        }
+        "tolerance": 0
       }
     ]
   },
@@ -75,39 +54,6 @@
           "duration": "${flood_duration}s"
         }
       }
-    },
-    {
-      "type": "probe",
-      "name": "check-health-during-flood",
-      "provider": {
-        "type": "http",
-        "url": "${app_url}/actuator/health",
-        "timeout": 30
-      },
-      "tolerance": {
-        "type": "range",
-        "range": [200, 599],
-        "target": "status"
-      }
-    },
-    {
-      "type": "probe",
-      "name": "check-valid-request-during-flood",
-      "provider": {
-        "type": "http",
-        "url": "${app_url}/dungeon/solve",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        },
-        "arguments": [[1, 2], [3, 4]],
-        "timeout": 30
-      },
-      "tolerance": {
-        "type": "range",
-        "range": [200, 599],
-        "target": "status"
-      }
     }
   ],
   "rollbacks": [
@@ -118,37 +64,6 @@
         "type": "process",
         "path": "sleep",
         "arguments": ["10"]
-      }
-    },
-    {
-      "type": "probe",
-      "name": "verify-health-after-flood",
-      "provider": {
-        "type": "http",
-        "url": "${app_url}/actuator/health"
-      },
-      "tolerance": {
-        "type": "range",
-        "range": [200, 299],
-        "target": "status"
-      }
-    },
-    {
-      "type": "probe",
-      "name": "verify-valid-request-works",
-      "provider": {
-        "type": "http",
-        "url": "${app_url}/dungeon/solve",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        },
-        "arguments": [[1, 2], [3, 4]]
-      },
-      "tolerance": {
-        "type": "range",
-        "range": [200, 299],
-        "target": "status"
       }
     }
   ]

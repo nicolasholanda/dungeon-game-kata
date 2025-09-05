@@ -1,0 +1,88 @@
+{
+  "version": "1.0.0",
+  "title": "Network Delay with Jitter Chaos Experiment",
+  "description": "Inject network delays with jitter to test application resilience using Pumba netem",
+  "tags": [
+    "network",
+    "latency",
+    "jitter",
+    "netem",
+    "pumba"
+  ],
+  "configuration": {
+    "app_url": {
+      "type": "env",
+      "key": "app_url",
+      "default": "http://localhost:80"
+    },
+    "target_pattern": {
+      "type": "env",
+      "key": "TARGET_PATTERN",
+      "default": "re2:^dungeon-game-kata-app(1|2|3)-\\d+$"
+    },
+    "delay_duration": {
+      "type": "env",
+      "key": "DELAY_DURATION",
+      "default": "30s"
+    },
+    "delay_time": {
+      "type": "env",
+      "key": "DELAY_TIME",
+      "default": "800"
+    },
+    "jitter": {
+      "type": "env",
+      "key": "JITTER",
+      "default": "200"
+    },
+    "correlation": {
+      "type": "env",
+      "key": "CORRELATION",
+      "default": "25"
+    }
+  },
+  "steady-state-hypothesis": {
+    "title": "Application meets SLA requirements and responds normally",
+    "probes": [
+      {
+        "name": "sla-compliance-check",
+        "type": "probe",
+        "provider": {
+          "type": "process",
+          "path": "k6",
+          "arguments": ["run", "--quiet", "experiments/sla_check_probe.js"]
+        },
+        "tolerance": 0
+      }
+    ]
+  },
+  "method": [
+    {
+      "name": "inject-network-delay-with-jitter",
+      "type": "action",
+      "provider": {
+        "type": "process",
+        "path": "bash",
+        "arguments": [
+          "-c",
+          "pumba --log-level info --random netem --duration ${delay_duration} delay --time ${delay_time} --jitter ${jitter} --correlation ${correlation} '${target_pattern}' > /tmp/pumba-netem.log 2>&1 &"
+        ]
+      },
+      "pauses": {
+        "after": 5
+      }
+    }
+  ],
+  "rollbacks": [
+    {
+      "name": "wait-for-netem-to-complete",
+      "type": "probe",
+      "provider": {
+        "type": "process",
+        "path": "sleep",
+        "arguments": ["30"]
+      }
+    }
+  ]
+}
+

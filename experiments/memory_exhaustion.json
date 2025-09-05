@@ -1,0 +1,126 @@
+{
+  "version": "1.0.0",
+  "title": "Memory Exhaustion",
+  "description": "Test application resilience when memory is fully exhausted",
+  "tags": [
+    "memory",
+    "infrastructure",
+    "availability"
+  ],
+  "configuration": {
+    "app_url": {
+      "type": "env",
+      "key": "APP_URL",
+      "default": "http://localhost:80"
+    }
+  },
+  "steady-state-hypothesis": {
+    "title": "Application meets SLA requirements and responds normally",
+    "probes": [
+      {
+        "name": "sla-compliance-check",
+        "type": "probe",
+        "provider": {
+          "type": "process",
+          "path": "k6",
+          "arguments": ["run", "--quiet", "experiments/sla_check_probe.js"]
+        },
+        "tolerance": 0
+      }
+    ]
+  },
+  "method": [
+    {
+      "type": "action",
+      "name": "consume-memory-app1",
+      "provider": {
+        "type": "process",
+        "path": "docker",
+        "arguments": [
+          "exec", "-d",
+          "dungeon-game-kata-app1-1",
+          "stress-ng", "--vm", "1", "--vm-bytes", "90%", "--timeout", "120s"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "name": "consume-memory-app2",
+      "provider": {
+        "type": "process",
+        "path": "docker",
+        "arguments": [
+          "exec", "-d",
+          "dungeon-game-kata-app2-1",
+          "stress-ng", "--vm", "1", "--vm-bytes", "90%", "--timeout", "120s"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "name": "consume-memory-app3",
+      "provider": {
+        "type": "process",
+        "path": "docker",
+        "arguments": [
+          "exec", "-d",
+          "dungeon-game-kata-app3-1",
+          "stress-ng", "--vm", "1", "--vm-bytes", "90%", "--timeout", "120s"
+        ]
+      },
+      "pauses": {
+        "after": 5
+      }
+    }
+  ],
+  "rollbacks": [
+    {
+      "type": "action",
+      "name": "stop-stress-in-app1",
+      "provider": {
+        "type": "process",
+        "path": "docker",
+        "arguments": [
+          "exec",
+          "dungeon-game-kata-app1-1",
+          "pkill", "-f", "stress-ng"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "name": "stop-stress-in-app2",
+      "provider": {
+        "type": "process",
+        "path": "docker",
+        "arguments": [
+          "exec",
+          "dungeon-game-kata-app2-1",
+          "pkill", "-f", "stress-ng"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "name": "stop-stress-in-app3",
+      "provider": {
+        "type": "process",
+        "path": "docker",
+        "arguments": [
+          "exec",
+          "dungeon-game-kata-app3-1",
+          "pkill", "-f", "stress-ng"
+        ]
+      }
+    },
+    {
+      "type": "probe",
+      "name": "wait-for-memory-recovery",
+      "provider": {
+        "type": "process",
+        "path": "sleep",
+        "arguments": ["10"]
+      }
+    }
+  ]
+}

@@ -1,17 +1,28 @@
 {
   "version": "1.0.0",
-  "title": "Database Connection Failure",
-  "description": "Test application resilience when database becomes unavailable",
+  "title": "Container Pause Chaos Experiment",
+  "description": "Randomly pause application containers",
   "tags": [
-    "database",
-    "infrastructure",
-    "availability"
+    "container",
+    "pause",
+    "pumba",
+    "infrastructure"
   ],
   "configuration": {
     "app_url": {
       "type": "env",
-      "key": "APP_URL",
+      "key": "app_url",
       "default": "http://localhost:80"
+    },
+    "target_pattern": {
+      "type": "env",
+      "key": "TARGET_PATTERN",
+      "default": "re2:^dungeon-game-kata-app(1|2|3)-\\d+$"
+    },
+    "pause_duration": {
+      "type": "env",
+      "key": "PAUSE_DURATION",
+      "default": "40s"
     }
   },
   "steady-state-hypothesis": {
@@ -31,54 +42,43 @@
   },
   "method": [
     {
+      "name": "pause-random-app-container",
       "type": "action",
-      "name": "stop-database-container",
       "provider": {
         "type": "process",
-        "path": "docker",
-        "arguments": ["stop", "dungeon-game-kata-db-1"]
+        "path": "bash",
+        "arguments": [
+          "-c",
+          "pumba --log-level info --random pause --duration ${pause_duration} --limit 1 '${target_pattern}' > /tmp/pumba.log 2>&1 &"
+        ]
       },
       "pauses": {
-        "after": 5
+        "after": 7
       }
     },
     {
+      "name": "verify-container-paused",
       "type": "probe",
-      "name": "verify-database-is-down",
       "provider": {
         "type": "process",
         "path": "docker",
-        "arguments": [
-          "ps",
-          "--filter",
-          "name=dungeon-game-kata-db-1",
-          "--format",
-          "table {{.Names}}\t{{.Status}}"
-        ]
+        "arguments": ["ps", "--filter", "status=paused", "--format", "{{.Names}}"]
       },
       "tolerance": {
         "type": "regex",
-        "pattern": "Exited"
+        "target": "stdout",
+        "pattern": "dungeon-game-kata-app"
       }
     }
   ],
   "rollbacks": [
     {
-      "type": "action",
-      "name": "restart-database-container",
-      "provider": {
-        "type": "process",
-        "path": "docker",
-        "arguments": ["start", "dungeon-game-kata-db-1"]
-      }
-    },
-    {
+      "name": "wait-for-container-to-resume",
       "type": "probe",
-      "name": "wait-for-database-recovery",
       "provider": {
         "type": "process",
         "path": "sleep",
-        "arguments": ["10"]
+        "arguments": ["35"]
       }
     }
   ]
