@@ -3,7 +3,7 @@
   "title": "Memory Exhaustion",
   "description": "Test application resilience when memory is fully exhausted",
   "tags": [
-    "database",
+    "memory",
     "infrastructure",
     "availability"
   ],
@@ -27,7 +27,7 @@
           "headers": {
             "Content-Type": "application/json"
           },
-          "arguments": [[1,2],[3,4]]
+          "arguments": [[1, 2, -1],[3, 4, -2],[5, 6, -3]]
         },
         "tolerance": {
           "type": "range",
@@ -40,72 +40,90 @@
   "method": [
     {
       "type": "action",
-      "name": "consume-memory",
+      "name": "consume-memory-app1",
       "provider": {
         "type": "process",
         "path": "docker",
         "arguments": [
           "exec", "-d",
-          "dungeon-game-kata-app-1",
+          "dungeon-game-kata-app1-1",
           "stress-ng", "--vm", "1", "--vm-bytes", "90%", "--timeout", "120s"
         ]
       }
     },
     {
-      "type": "probe",
-      "name": "memory-usage-percentage",
+      "type": "action",
+      "name": "consume-memory-app2",
       "provider": {
-        "type": "process", 
+        "type": "process",
         "path": "docker",
         "arguments": [
-          "exec", "dungeon-game-kata-app-1",
-          "sh", "-c",
-          "sleep 10 ; free | awk 'NR==2{printf \"Memory Usage: %.2f%%\\n\", $3*100/($3+$7)}'"
+          "exec", "-d",
+          "dungeon-game-kata-app2-1",
+          "stress-ng", "--vm", "1", "--vm-bytes", "90%", "--timeout", "120s"
         ]
-      },
-      "tolerance": {
-        "type": "regex",
-        "target": "stdout", 
-        "pattern": "Memory Usage: ([0-9.]+)%",
-        "count": 1
       }
     },
     {
-      "type": "probe",
-      "name": "check-application-response-after-db-failure",
+      "type": "action",
+      "name": "consume-memory-app3",
       "provider": {
-        "type": "http",
-        "url": "${app_url}/dungeon/solve",
-        "method": "POST",
-        "headers": {
-          "Content-Type": "application/json"
-        },
-        "arguments": [[1,2],[3,4]]
+        "type": "process",
+        "path": "docker",
+        "arguments": [
+          "exec", "-d",
+          "dungeon-game-kata-app3-1",
+          "stress-ng", "--vm", "1", "--vm-bytes", "90%", "--timeout", "120s"
+        ]
       },
-      "tolerance": {
-        "type": "range",
-        "range": [200, 299],
-        "target": "status"
+      "pauses": {
+        "after": 5
       }
     }
   ],
   "rollbacks": [
     {
       "type": "action",
-      "name": "stop-stress-in-container",
+      "name": "stop-stress-in-app1",
       "provider": {
         "type": "process",
         "path": "docker",
         "arguments": [
           "exec",
-          "dungeon-game-kata-app-1",
+          "dungeon-game-kata-app1-1",
+          "pkill", "-f", "stress-ng"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "name": "stop-stress-in-app2",
+      "provider": {
+        "type": "process",
+        "path": "docker",
+        "arguments": [
+          "exec",
+          "dungeon-game-kata-app2-1",
+          "pkill", "-f", "stress-ng"
+        ]
+      }
+    },
+    {
+      "type": "action",
+      "name": "stop-stress-in-app3",
+      "provider": {
+        "type": "process",
+        "path": "docker",
+        "arguments": [
+          "exec",
+          "dungeon-game-kata-app3-1",
           "pkill", "-f", "stress-ng"
         ]
       }
     },
     {
       "type": "probe",
-      "name": "wait-for-database-recovery",
+      "name": "wait-for-memory-recovery",
       "provider": {
         "type": "process",
         "path": "sleep",
