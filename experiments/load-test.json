@@ -15,25 +15,17 @@
     }
   },
   "steady-state-hypothesis": {
-    "title": "Application responds normally with adequate performance",
+    "title": "Application meets SLA requirements and responds normally",
     "probes": [
       {
-        "name": "test-solve-endpoint-performance",
+        "name": "sla-compliance-check",
         "type": "probe",
         "provider": {
-          "type": "http",
-          "url": "${app_url}/dungeon/solve",
-          "method": "POST",
-          "headers": {
-            "Content-Type": "application/json"
-          },
-          "arguments": [[1,-3,3],[0,-2,0],[-3,-3,-3]]
+          "type": "process",
+          "path": "k6",
+          "arguments": ["run", "--quiet", "experiments/sla_check_probe.js"]
         },
-        "tolerance": {
-          "type": "range",
-          "range": [200, 299],
-          "target": "status"
-        }
+        "tolerance": 0
       }
     ]
   },

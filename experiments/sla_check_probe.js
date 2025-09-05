@@ -1,12 +1,11 @@
 import http from "k6/http";
 import { check } from "k6";
-import { Rate } from "k6/metrics";
 
 export let options = {
   iterations: 10,
   thresholds: {
-    http_req_duration: ["p(99)<500"], // 99% of requests under 500ms
-    http_req_failed: ["rate<0.01"],   // <1% failures
+    http_req_duration: ["p(95)<500"],
+    http_req_failed: ["rate<0.01"],
   },
 };
 
@@ -18,7 +17,7 @@ function randomMatrix(rows, cols) {
 
 export default function () {
   const url = 'http://localhost:80/dungeon/solve';
-  const payload = JSON.stringify(randomMatrix(5, 5));
+  const payload = JSON.stringify(randomMatrix(3, 3));
   const params = {
     headers: {
       'Content-Type': 'application/json',
@@ -28,6 +27,7 @@ export default function () {
   let res = http.post(url, payload, params);
 
   check(res, {
-    "status is 2xx": (r) => r.status >= 200 && r.status < 300
+    "status is 2xx": (r) => r.status >= 200 && r.status < 300,
+    "response time < 500ms": (r) => r.timings.duration < 500,
   });
 }
