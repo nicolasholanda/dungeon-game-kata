@@ -2,7 +2,7 @@ spring:
   application:
     name: dungeon-game-kata
   datasource:
-    url: jdbc:postgresql://localhost:5432/appdb # 'db' = service name on docker-compose
+    url: jdbc:postgresql://db:5432/appdb # 'db' = service name on docker-compose
     username: app
     password: secret
 
@@ -38,6 +38,7 @@ chaos:
     enabled: false
     watcher:
       restController: true
+      service: true
     assaults:
       level: 3
       latencyActive: false

@@ -7,7 +7,7 @@
     "base_url": {
       "type": "env",
       "key": "APP_URL",
-      "default": "http://localhost/actuator"
+      "default": "http://localhost:9050/actuator"
     }
   },
   "steady-state-hypothesis": {
