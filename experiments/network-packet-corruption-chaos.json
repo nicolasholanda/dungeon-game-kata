@@ -1,0 +1,86 @@
+{
+  "version": "1.0.0",
+  "title": "Network Packet Corruption Chaos Experiment",
+  "description": "Introduce network packet corruption to test resilience to data integrity issues",
+  "tags": [
+    "network",
+    "packet-corruption",
+    "data-integrity",
+    "netem",
+    "pumba"
+  ],
+  "configuration": {
+    "app_url": {
+      "type": "env",
+      "key": "app_url",
+      "default": "http://localhost:80"
+    },
+    "target_pattern": {
+      "type": "env",
+      "key": "TARGET_PATTERN",
+      "default": "re2:^dungeon-game-kata-app(1|2|3)-\\d+$"
+    },
+    "corruption_duration": {
+      "type": "env",
+      "key": "CORRUPTION_DURATION",
+      "default": "20s"
+    },
+    "corruption_percent": {
+      "type": "env",
+      "key": "CORRUPTION_PERCENT",
+      "default": "1"
+    }
+  },
+  "steady-state-hypothesis": {
+    "title": "Application responds normally with adequate performance",
+    "probes": [
+      {
+        "name": "test-solve-endpoint-performance",
+        "type": "probe",
+        "provider": {
+          "type": "http",
+          "url": "${app_url}/dungeon/solve",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "arguments": [[1,-3,3],[0,-2,0],[-3,-3,-3]]
+        },
+        "tolerance": {
+          "type": "range",
+          "range": [200, 299],
+          "target": "status"
+        }
+      }
+    ]
+  },
+  "method": [
+    {
+      "name": "inject-network-packet-corruption",
+      "type": "action",
+      "provider": {
+        "type": "process",
+        "path": "bash",
+        "arguments": [
+          "-c",
+          "pumba --log-level info --random netem --duration ${corruption_duration} corrupt --percent ${corruption_percent} '${target_pattern}' > /tmp/pumba-packet-corruption.log 2>&1 &"
+        ]
+      },
+      "pauses": {
+        "after": 5
+      }
+    }
+  ],
+  "rollbacks": [
+    {
+      "name": "wait-for-packet-corruption-to-complete",
+      "type": "probe",
+      "provider": {
+        "type": "process",
+        "path": "sleep",
+        "arguments": ["25"]
+      }
+    }
+  ]
+}
+
