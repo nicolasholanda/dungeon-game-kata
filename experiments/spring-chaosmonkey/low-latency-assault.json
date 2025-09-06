@@ -1,0 +1,108 @@
+{
+  "version": "1.0.0",
+  "title": "Enable Chaos Monkey and apply kill application assault",
+  "description": "Chaos Monkey injects a small latency (50–200 ms) to mimic minor performance degradation.",
+  "tags": [
+    "spring",
+    "chaosmonkey",
+    "latency"
+  ],
+  "configuration": {
+    "base_url": {
+      "type": "env",
+      "key": "APP_URL",
+      "default": "http://localhost:9050/actuator"
+    }
+  },
+  "steady-state-hypothesis": {
+    "title": "Service is healthy",
+    "probes": [
+      {
+        "name": "health-check",
+        "type": "probe",
+        "tolerance": {
+          "type": "range",
+          "range": [
+            200,
+            299
+          ],
+          "target": "status"
+        },
+        "provider": {
+          "type": "http",
+          "url": "${base_url}/health",
+          "timeout": 5,
+          "method": "GET"
+        }
+      }
+    ]
+  },
+  "method": [
+    {
+      "name": "enable-chaosmonkey",
+      "type": "action",
+      "provider": {
+        "type": "python",
+        "module": "chaosspring.actions",
+        "func": "enable_chaosmonkey",
+        "arguments": {
+          "base_url": "${base_url}"
+        }
+      }
+    },
+    {
+      "name": "configure-kill-assault",
+      "type": "action",
+      "provider": {
+        "type": "python",
+        "module": "chaosspring.actions",
+        "func": "change_assaults_configuration",
+        "arguments": {
+          "base_url": "${base_url}",
+          "assaults_configuration": {
+            "level": 5,
+            "latencyRangeStart": 50,
+            "latencyRangeEnd": 200,
+            "latencyActive": true,
+            "exceptionsActive": false,
+            "killApplicationActive": false,
+            "restartApplicationActive": false
+          }
+        }
+      }
+    }
+  ],
+  "rollbacks": [
+    {
+      "name": "disable-chaosmonkey",
+      "type": "action",
+      "provider": {
+        "type": "python",
+        "module": "chaosspring.actions",
+        "func": "disable_chaosmonkey",
+        "arguments": {
+          "base_url": "${base_url}"
+        }
+      }
+    },
+    {
+      "name": "reset-assaults-configuration",
+      "type": "action",
+      "provider": {
+        "type": "python",
+        "module": "chaosspring.actions",
+        "func": "change_assaults_configuration",
+        "arguments": {
+          "base_url": "${base_url}",
+          "assaults_configuration": {
+            "level": 3,
+            "latencyActive": false,
+            "exceptionsActive": false,
+            "killApplicationActive": false,
+            "restartApplicationActive": false
+          }
+        }
+      }
+    }
+  ]
+}
