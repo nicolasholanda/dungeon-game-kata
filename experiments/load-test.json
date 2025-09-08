@@ -11,24 +11,21 @@
     "app_url": {
       "type": "env",
       "key": "APP_URL",
-      "default": "http://localhost"
+      "default": "http://localhost:80"
     }
   },
   "steady-state-hypothesis": {
-    "title": "Application responds normally",
+    "title": "Application meets SLA requirements and responds normally",
     "probes": [
       {
-        "name": "health-check",
+        "name": "sla-compliance-check",
         "type": "probe",
         "provider": {
-          "type": "http",
-          "url": "${app_url}/actuator/health"
+          "type": "process",
+          "path": "k6",
+          "arguments": ["run", "--quiet", "experiments/sla_check_probe.js"]
         },
-        "tolerance": {
-          "type": "range",
-          "range": [200, 299],
-          "target": "status"
-        }
+        "tolerance": 0
       }
     ]
   },
@@ -50,16 +47,12 @@
   ],
   "rollbacks": [
     {
-      "name": "verify-health-after-load",
+      "name": "wait-for-load-test-to-complete",
       "type": "probe",
       "provider": {
-        "type": "http",
-        "url": "${app_url}/actuator/health"
-      },
-      "tolerance": {
-        "type": "range",
-        "range": [200, 299],
-        "target": "status"
+        "type": "process",
+        "path": "sleep",
+        "arguments": ["15"]
       }
     }
   ]
