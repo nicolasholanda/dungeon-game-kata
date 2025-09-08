@@ -17,13 +17,13 @@ The application runs with high availability setup:
 - **Frontend UI** - React-based dungeon visualizer
 
 ## Server
-
 - `http://localhost:8081` (direct access)
 - `http://localhost:80` (via HAProxy)
+- `http://localhost:9050` app3 (Chaos Monkey profile)
 
 ## Swagger UI
 
-`http://localhost:8080/swagger-ui.html`
+`http://localhost:80/swagger-ui.html`
 
 ## REST endpoints
 
@@ -75,8 +75,8 @@ Install required tools:
 sudo apt update
 sudo apt install python3 python3-pip
 
-# Install Chaos Toolkit
-pip install chaostoolkit chaostoolkit-k6
+# Install Chaos Toolkit and Spring extension
+pip install -r experiments/requirements.txt
 
 # Build custom chaos toolkit container (recommended)
 cd experiments

@@ -61,10 +61,10 @@ services:
     init: true
     build: .
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: chaos-monkey
       POSTGRES_USER: app
       POSTGRES_PASSWORD: secret
-      SERVER_PORT: 8081
+      SERVER_PORT: 9050
     depends_on:
       db:
         condition: service_healthy
@@ -72,11 +72,13 @@ services:
     labels:
       - "chaos.target=apps"
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8081/actuator/health | grep -q '\"status\":\"UP\"'"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9050/actuator/health | grep -q '\"status\":\"UP\"'"]
       interval: 10s
       timeout: 3s
       retries: 6
       start_period: 30s
+    ports:
+      - "9050:9050"
 
 
   haproxy:
