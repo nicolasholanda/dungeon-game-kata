@@ -4,10 +4,17 @@ spring:
     username: ${POSTGRES_USER:app}
     password: ${POSTGRES_PASSWORD:secret}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 1000
+      validation-timeout: 1000
+      maximum-pool-size: 10
+      minimum-idle: 1
+      idle-timeout: 30000
+      max-lifetime: 60000
+      leak-detection-threshold: 10000
   sql:
     init:
       mode: never
-#      mode: always
       continue-on-error: true
 
 management:
