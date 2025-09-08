@@ -5,6 +5,14 @@ spring:
     url: jdbc:postgresql://db:5432/appdb # 'db' = service name on docker-compose
     username: app
     password: secret
+    hikari:
+      connection-timeout: 1000
+      validation-timeout: 1000
+      maximum-pool-size: 10
+      minimum-idle: 1
+      idle-timeout: 30000
+      max-lifetime: 60000
+      leak-detection-threshold: 10000
 
   sql:
     init:
@@ -15,6 +23,10 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        connection:
+          provider_disables_autocommit: true
+        jdbc:
+          time_zone: UTC
     hibernate:
       ddl-auto: none
 
