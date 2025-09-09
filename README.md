@@ -16,6 +16,12 @@ The application runs with high availability setup:
 - **PostgreSQL Database** - Persistent storage for solved dungeons
 - **Frontend UI** - React-based dungeon visualizer
 
+## Architecture Diagram
+
+![Testing Diagram](Testing%20diagram.png)
+
+This diagram shows the overall architecture and highlights how each chaos testing tool interacts with the system components.
+
 ## Server
 - `http://localhost:8081` (direct access)
 - `http://localhost:80` (via HAProxy)
