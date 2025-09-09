@@ -15,17 +15,14 @@
     }
   },
   "steady-state-hypothesis": {
-    "title": "Service is healthy",
+    "title": "Application is UP and handles business requests with proper error handling",
     "probes": [
       {
         "name": "health-check",
         "type": "probe",
         "tolerance": {
           "type": "range",
-          "range": [
-            200,
-            299
-          ],
+          "range": [200, 299],
           "target": "status"
         },
         "provider": {
@@ -34,6 +31,16 @@
           "timeout": 5,
           "method": "GET"
         }
+      },
+      {
+        "name": "chaos-monkey-business-logic-test",
+        "type": "probe",
+        "provider": {
+          "type": "process",
+          "path": "k6",
+          "arguments": ["run", "--quiet", "experiments/spring-chaosmonkey/chaos_monkey_probe.js"]
+        },
+        "tolerance": 0
       }
     ]
   },
@@ -61,8 +68,8 @@
           "base_url": "${base_url}",
           "assaults_configuration": {
             "level": 5,
-            "latencyRangeStart": 3000,
-            "latencyRangeEnd": 7000,
+            "latencyRangeStart": 500,
+            "latencyRangeEnd": 1500,
             "latencyActive": true,
             "exceptionsActive": false,
             "killApplicationActive": false,
