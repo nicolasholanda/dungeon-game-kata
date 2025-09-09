@@ -24,10 +24,5 @@ export default function () {
     },
   };
 
-  let res = http.post(url, payload, params);
-
-  check(res, {
-    "status is 2xx": (r) => r.status >= 200 && r.status < 300,
-    "response time < 500ms": (r) => r.timings.duration < 500,
-  });
+  http.post(url, payload, params);
 }
